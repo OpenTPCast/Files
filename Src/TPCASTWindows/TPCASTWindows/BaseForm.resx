@@ -118,6 +118,9 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <assembly alias="System.Drawing" name="System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
+  <data name="panel2.Size" type="System.Drawing.Size, System.Drawing">
+    <value>600, 30</value>
+  </data>
   <data name="commonProblems.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
     <value>
         iVBORw0KGgoAAAANSUhEUgAAAB4AAAAeCAYAAAA7MK6iAAAABGdBTUEAALGPC/xhBQAAAhdJREFUSEvF
@@ -133,11 +136,18 @@
         SUVORK5CYII=
 </value>
   </data>
+  <data name="&gt;&gt;typeLabel.Parent" xml:space="preserve">
+    <value>titleBar</value>
+  </data>
   <data name="&gt;&gt;backgroundImage.Name" xml:space="preserve">
     <value>backgroundImage</value>
   </data>
   <data name="&gt;&gt;backgroundImage.Type" xml:space="preserve">
     <value>System.Windows.Forms.PictureBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <assembly alias="mscorlib" name="mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
+  <data name="typeLabel.TabIndex" type="System.Int32, mscorlib">
+    <value>17</value>
   </data>
   <data name="minButton.Size" type="System.Drawing.Size, System.Drawing">
     <value>16, 16</value>
@@ -145,13 +155,19 @@
   <data name="&gt;&gt;pictureBox1.Parent" xml:space="preserve">
     <value>titleBar</value>
   </data>
+  <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
+  <data name="backgroundImage.Dock" type="System.Windows.Forms.DockStyle, System.Windows.Forms">
+    <value>Fill</value>
+  </data>
   <data name="backgroundImage.Size" type="System.Drawing.Size, System.Drawing">
     <value>600, 364</value>
   </data>
   <data name="&gt;&gt;pictureBox1.ZOrder" xml:space="preserve">
-    <value>2</value>
+    <value>3</value>
   </data>
-  <assembly alias="mscorlib" name="mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
+  <data name="titleLabel.AutoSize" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
   <data name="closeButton.TabIndex" type="System.Int32, mscorlib">
     <value>16</value>
   </data>
@@ -1898,7 +1914,10 @@
 </value>
   </data>
   <data name="$this.Text" xml:space="preserve">
-    <value>Wireless connection assistant for VIVE(Preview Edition)</value>
+    <value>Wireless connection assistant for VIVE</value>
+  </data>
+  <data name="&gt;&gt;typeLabel.ZOrder" xml:space="preserve">
+    <value>0</value>
   </data>
   <data name="&gt;&gt;titleBar.Type" xml:space="preserve">
     <value>System.Windows.Forms.Panel, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
@@ -1908,6 +1927,9 @@
   </data>
   <data name="$this.ClientSize" type="System.Drawing.Size, System.Drawing">
     <value>600, 364</value>
+  </data>
+  <data name="&gt;&gt;appLabel.ZOrder" xml:space="preserve">
+    <value>0</value>
   </data>
   <data name="switchChannel.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
     <value>
@@ -1929,27 +1951,35 @@
         QmCC
 </value>
   </data>
+  <data name="&gt;&gt;appLabel.Parent" xml:space="preserve">
+    <value>panel2</value>
+  </data>
   <data name="&gt;&gt;guideImage.Parent" xml:space="preserve">
     <value>$this</value>
   </data>
+  <data name="backgroundImagePanel.TabIndex" type="System.Int32, mscorlib">
+    <value>7</value>
+  </data>
   <data name="&gt;&gt;closeButton.ZOrder" xml:space="preserve">
-    <value>4</value>
+    <value>5</value>
+  </data>
+  <data name="panel2.TabIndex" type="System.Int32, mscorlib">
+    <value>7</value>
   </data>
   <data name="dropMenu.Size" type="System.Drawing.Size, System.Drawing">
-    <value>130, 70</value>
+    <value>130, 92</value>
   </data>
-  <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
   <data name="closeButton.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>3, 8, 14, 3</value>
   </data>
-  <data name="label1.Text" xml:space="preserve">
-    <value>Wireless connection assistant for VIVE(Preview Edition)</value>
-  </data>
-  <data name="label1.Size" type="System.Drawing.Size, System.Drawing">
-    <value>376, 20</value>
-  </data>
-  <data name="label1.Font" type="System.Drawing.Font, System.Drawing">
+  <data name="titleLabel.Font" type="System.Drawing.Font, System.Drawing">
     <value>Microsoft YaHei, 14px</value>
+  </data>
+  <data name="titleLabel.Text" xml:space="preserve">
+    <value>Wireless connection assistant for VIVE</value>
+  </data>
+  <data name="titleLabel.Size" type="System.Drawing.Size, System.Drawing">
+    <value>262, 20</value>
   </data>
   <data name="dropMenuButton.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
     <value>
@@ -1974,6 +2004,15 @@
   <data name="closeButton.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
   </data>
+  <data name="typeLabel.Text" xml:space="preserve">
+    <value>VR1</value>
+  </data>
+  <data name="typeLabel.Size" type="System.Drawing.Size, System.Drawing">
+    <value>35, 20</value>
+  </data>
+  <data name="typeLabel.Font" type="System.Drawing.Font, System.Drawing">
+    <value>Microsoft YaHei, 14px</value>
+  </data>
   <data name="&gt;&gt;minButton.Type" xml:space="preserve">
     <value>System.Windows.Forms.Button, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
@@ -1981,7 +2020,7 @@
     <value>minButton</value>
   </data>
   <data name="&gt;&gt;guideImage.ZOrder" xml:space="preserve">
-    <value>4</value>
+    <value>3</value>
   </data>
   <data name="&gt;&gt;dropMenuButton.Parent" xml:space="preserve">
     <value>titleBar</value>
@@ -1991,6 +2030,9 @@
   </data>
   <data name="&gt;&gt;contextMenuStrip.Type" xml:space="preserve">
     <value>System.Windows.Forms.ContextMenuStrip, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;panel2.ZOrder" xml:space="preserve">
+    <value>0</value>
   </data>
   <data name="&gt;&gt;closeButton.Parent" xml:space="preserve">
     <value>titleBar</value>
@@ -2009,6 +2051,12 @@
         MLfQP+RnfnSDLQCcJ46+KizXBnQAAAAASUVORK5CYII=
 </value>
   </data>
+  <data name="&gt;&gt;titleLabel.Name" xml:space="preserve">
+    <value>titleLabel</value>
+  </data>
+  <data name="&gt;&gt;titleLabel.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Label, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
   <data name="closeButton.Size" type="System.Drawing.Size, System.Drawing">
     <value>16, 16</value>
   </data>
@@ -2024,6 +2072,12 @@
   <data name="guideImage.TabIndex" type="System.Int32, mscorlib">
     <value>6</value>
   </data>
+  <data name="&gt;&gt;backgroundImagePanel.Parent" xml:space="preserve">
+    <value>$this</value>
+  </data>
+  <data name="&gt;&gt;panel2.Parent" xml:space="preserve">
+    <value>backgroundImagePanel</value>
+  </data>
   <data name="&gt;&gt;closeButton.Name" xml:space="preserve">
     <value>closeButton</value>
   </data>
@@ -2033,11 +2087,14 @@
   <data name="dropMenu.AutoSize" type="System.Boolean, mscorlib">
     <value>False</value>
   </data>
+  <data name="typeLabel.Location" type="System.Drawing.Point, System.Drawing">
+    <value>474, 13</value>
+  </data>
   <data name="guideImage.Size" type="System.Drawing.Size, System.Drawing">
     <value>600, 364</value>
   </data>
   <data name="&gt;&gt;dropMenuButton.ZOrder" xml:space="preserve">
-    <value>0</value>
+    <value>1</value>
   </data>
   <data name="dropMenuButton.Size" type="System.Drawing.Size, System.Drawing">
     <value>16, 16</value>
@@ -2047,6 +2104,27 @@
         iVBORw0KGgoAAAANSUhEUgAAAAwAAAACCAYAAABsfz2XAAAABGdBTUEAALGPC/xhBQAAABRJREFUGFdj
         uHHjxn9SMIkabvwHAC/+VKn/jQQXAAAAAElFTkSuQmCC
 </value>
+  </data>
+  <data name="typeLabel.AutoSize" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="&gt;&gt;appLabel.Name" xml:space="preserve">
+    <value>appLabel</value>
+  </data>
+  <data name="&gt;&gt;appLabel.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Label, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="appLabel.TabIndex" type="System.Int32, mscorlib">
+    <value>6</value>
+  </data>
+  <data name="&gt;&gt;wifiSetting.Name" xml:space="preserve">
+    <value>wifiSetting</value>
+  </data>
+  <data name="&gt;&gt;wifiSetting.Type" xml:space="preserve">
+    <value>System.Windows.Forms.ToolStripMenuItem, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;titleLabel.ZOrder" xml:space="preserve">
+    <value>2</value>
   </data>
   <data name="&gt;&gt;dropMenuButton.Name" xml:space="preserve">
     <value>dropMenuButton</value>
@@ -2066,8 +2144,23 @@
   <data name="notifyIcon.Visible" type="System.Boolean, mscorlib">
     <value>True</value>
   </data>
+  <data name="appLabel.TextAlign" type="System.Drawing.ContentAlignment, System.Drawing">
+    <value>MiddleCenter</value>
+  </data>
+  <data name="&gt;&gt;titleLabel.Parent" xml:space="preserve">
+    <value>titleBar</value>
+  </data>
+  <data name="&gt;&gt;backgroundImagePanel.ZOrder" xml:space="preserve">
+    <value>4</value>
+  </data>
   <data name="dropMenuButton.FlatStyle" type="System.Windows.Forms.FlatStyle, System.Windows.Forms">
     <value>Flat</value>
+  </data>
+  <data name="&gt;&gt;typeLabel.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Label, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;typeLabel.Name" xml:space="preserve">
+    <value>typeLabel</value>
   </data>
   <data name="guideImage.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Bottom, Left, Right</value>
@@ -2527,7 +2620,7 @@
     <value>97, 26</value>
   </data>
   <data name="&gt;&gt;backgroundImage.Parent" xml:space="preserve">
-    <value>$this</value>
+    <value>backgroundImagePanel</value>
   </data>
   <data name="backgroundImage.TabIndex" type="System.Int32, mscorlib">
     <value>5</value>
@@ -2538,6 +2631,12 @@
   <data name="titleBar.Location" type="System.Drawing.Point, System.Drawing">
     <value>0, 0</value>
   </data>
+  <data name="&gt;&gt;panel2.Name" xml:space="preserve">
+    <value>panel2</value>
+  </data>
+  <data name="&gt;&gt;panel2.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Panel, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
   <data name="about.Text" xml:space="preserve">
     <value>About us</value>
   </data>
@@ -2547,11 +2646,17 @@
   <data name="pictureBox1.Location" type="System.Drawing.Point, System.Drawing">
     <value>11, 9</value>
   </data>
-  <data name="label1.Location" type="System.Drawing.Point, System.Drawing">
-    <value>141, 13</value>
-  </data>
   <data name="guideImage.Location" type="System.Drawing.Point, System.Drawing">
     <value>0, 0</value>
+  </data>
+  <data name="titleLabel.TabIndex" type="System.Int32, mscorlib">
+    <value>5</value>
+  </data>
+  <data name="wifiSetting.Text" xml:space="preserve">
+    <value>WiFi Setting</value>
+  </data>
+  <data name="wifiSetting.Size" type="System.Drawing.Size, System.Drawing">
+    <value>160, 22</value>
   </data>
   <data name="&gt;&gt;switchChannel.Type" xml:space="preserve">
     <value>System.Windows.Forms.ToolStripMenuItem, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
@@ -2560,10 +2665,13 @@
     <value>switchChannel</value>
   </data>
   <data name="&gt;&gt;backgroundImage.ZOrder" xml:space="preserve">
-    <value>3</value>
+    <value>1</value>
   </data>
   <data name="pictureBox1.Size" type="System.Drawing.Size, System.Drawing">
     <value>120, 27</value>
+  </data>
+  <data name="appLabel.Location" type="System.Drawing.Point, System.Drawing">
+    <value>0, 0</value>
   </data>
   <data name="&gt;&gt;about.Name" xml:space="preserve">
     <value>about</value>
@@ -2579,9 +2687,6 @@
   </data>
   <data name="minButton.FlatStyle" type="System.Windows.Forms.FlatStyle, System.Windows.Forms">
     <value>Flat</value>
-  </data>
-  <data name="label1.AutoSize" type="System.Boolean, mscorlib">
-    <value>True</value>
   </data>
   <data name="&gt;&gt;guideImage.Type" xml:space="preserve">
     <value>System.Windows.Forms.PictureBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
@@ -2607,8 +2712,17 @@
   <data name="closeButton.Location" type="System.Drawing.Point, System.Drawing">
     <value>570, 14</value>
   </data>
-  <data name="&gt;&gt;label1.ZOrder" xml:space="preserve">
-    <value>1</value>
+  <data name="appLabel.Font" type="System.Drawing.Font, System.Drawing">
+    <value>Microsoft YaHei, 20px</value>
+  </data>
+  <data name="appLabel.Dock" type="System.Windows.Forms.DockStyle, System.Windows.Forms">
+    <value>Fill</value>
+  </data>
+  <data name="appLabel.Text" xml:space="preserve">
+    <value>无线套件连接助手</value>
+  </data>
+  <data name="appLabel.Size" type="System.Drawing.Size, System.Drawing">
+    <value>600, 30</value>
   </data>
   <data name="&gt;&gt;$this.Name" xml:space="preserve">
     <value>BaseForm</value>
@@ -2616,8 +2730,8 @@
   <data name="&gt;&gt;$this.Type" xml:space="preserve">
     <value>System.Windows.Forms.Form, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
-  <data name="&gt;&gt;label1.Parent" xml:space="preserve">
-    <value>titleBar</value>
+  <data name="titleLabel.Location" type="System.Drawing.Point, System.Drawing">
+    <value>141, 13</value>
   </data>
   <data name="titleBar.Size" type="System.Drawing.Size, System.Drawing">
     <value>600, 45</value>
@@ -2637,12 +2751,6 @@
   <data name="&gt;&gt;minButton.Parent" xml:space="preserve">
     <value>titleBar</value>
   </data>
-  <data name="&gt;&gt;label1.Type" xml:space="preserve">
-    <value>System.Windows.Forms.Label, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
-  <data name="&gt;&gt;label1.Name" xml:space="preserve">
-    <value>label1</value>
-  </data>
   <data name="backgroundImage.Location" type="System.Drawing.Point, System.Drawing">
     <value>0, 0</value>
   </data>
@@ -2650,16 +2758,13 @@
     <value>14</value>
   </data>
   <data name="&gt;&gt;minButton.ZOrder" xml:space="preserve">
-    <value>3</value>
+    <value>4</value>
   </data>
   <data name="&gt;&gt;quit.Type" xml:space="preserve">
     <value>System.Windows.Forms.ToolStripMenuItem, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="&gt;&gt;quit.Name" xml:space="preserve">
     <value>quit</value>
-  </data>
-  <data name="label1.TabIndex" type="System.Int32, mscorlib">
-    <value>5</value>
   </data>
   <data name="pictureBox1.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
     <value>
@@ -2710,11 +2815,26 @@
         8DmHPcIJULPH21swudkD/S1Y2PwnzC1IEvijLYo+AdAnRNpLMIr9AAAAAElFTkSuQmCC
 </value>
   </data>
+  <data name="backgroundImagePanel.Location" type="System.Drawing.Point, System.Drawing">
+    <value>0, 0</value>
+  </data>
+  <data name="backgroundImagePanel.Size" type="System.Drawing.Size, System.Drawing">
+    <value>600, 364</value>
+  </data>
   <data name="&gt;&gt;titleBar.Parent" xml:space="preserve">
     <value>$this</value>
   </data>
   <data name="$this.AutoScaleDimensions" type="System.Drawing.SizeF, System.Drawing">
     <value>6, 12</value>
+  </data>
+  <data name="&gt;&gt;backgroundImagePanel.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Panel, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;backgroundImagePanel.Name" xml:space="preserve">
+    <value>backgroundImagePanel</value>
+  </data>
+  <data name="panel2.Location" type="System.Drawing.Point, System.Drawing">
+    <value>0, 117</value>
   </data>
   <data name="pictureBox1.TabIndex" type="System.Int32, mscorlib">
     <value>3</value>

@@ -1,3 +1,4 @@
+using NLog;
 using System;
 using System.ComponentModel;
 using System.Net;
@@ -13,6 +14,8 @@ namespace TPCASTWindows
 		private delegate void OnDownloadFileCompletedDelegate(object sender, AsyncCompletedEventArgs e);
 
 		private delegate void OnDownloadTimeoutDelegate(object userToken);
+
+		private static Logger log = LogManager.GetCurrentClassLogger();
 
 		private Control context;
 
@@ -91,7 +94,7 @@ namespace TPCASTWindows
 
 		private void downloadFileCompleted(object sender, AsyncCompletedEventArgs e)
 		{
-			Console.WriteLine("complete " + e.UserState);
+			DownloadModel.log.Trace("complete " + e.UserState);
 			this.isDownloading = false;
 			if (this.webClient != null)
 			{

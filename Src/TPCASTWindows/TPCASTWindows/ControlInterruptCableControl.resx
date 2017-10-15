@@ -217,7 +217,7 @@
     <value>customLabel2</value>
   </data>
   <data name="&gt;&gt;customLabel2.Type" xml:space="preserve">
-    <value>TPCASTWindows.CustomLabel, TPCASTWindows, Version=1.0.5.0, Culture=neutral, PublicKeyToken=null</value>
+    <value>TPCASTWindows.CustomLabel, TPCASTWindows, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null</value>
   </data>
   <data name="customLabel2.Font" type="System.Drawing.Font, System.Drawing">
     <value>Microsoft YaHei, 14px</value>

@@ -9,6 +9,16 @@ namespace TPCASTWindows
 	{
 		private IContainer components;
 
+		protected override CreateParams CreateParams
+		{
+			get
+			{
+				CreateParams expr_06 = base.CreateParams;
+				expr_06.Style |= 134217728;
+				return expr_06;
+			}
+		}
+
 		public GrayForm()
 		{
 			this.InitializeComponent();

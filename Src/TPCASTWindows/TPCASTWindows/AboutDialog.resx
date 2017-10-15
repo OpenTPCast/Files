@@ -127,8 +127,14 @@
   <data name="versionLabel.Font" type="System.Drawing.Font, System.Drawing">
     <value>Microsoft YaHei, 14px</value>
   </data>
+  <data name="titleLabel.TextAlign" type="System.Drawing.ContentAlignment, System.Drawing">
+    <value>MiddleCenter</value>
+  </data>
+  <data name="panel1.Size" type="System.Drawing.Size, System.Drawing">
+    <value>448, 24</value>
+  </data>
   <data name="&gt;&gt;label3.ZOrder" xml:space="preserve">
-    <value>3</value>
+    <value>6</value>
   </data>
   <assembly alias="mscorlib" name="mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
   <data name="firmwareVersionLabel.AutoSize" type="System.Boolean, mscorlib">
@@ -159,6 +165,12 @@
   <data name="&gt;&gt;label3.Parent" xml:space="preserve">
     <value>$this</value>
   </data>
+  <data name="&gt;&gt;refresh.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Button, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;refresh.Name" xml:space="preserve">
+    <value>refresh</value>
+  </data>
   <data name="&gt;&gt;firmwareVersionLabel.Parent" xml:space="preserve">
     <value>$this</value>
   </data>
@@ -166,10 +178,10 @@
     <value>500, 264</value>
   </data>
   <data name="&gt;&gt;firmwareVersionLabel.ZOrder" xml:space="preserve">
-    <value>0</value>
+    <value>3</value>
   </data>
   <data name="&gt;&gt;closeButton.ZOrder" xml:space="preserve">
-    <value>5</value>
+    <value>0</value>
   </data>
   <data name="label3.Text" xml:space="preserve">
     <value>label3</value>
@@ -177,17 +189,35 @@
   <data name="label3.Size" type="System.Drawing.Size, System.Drawing">
     <value>450, 1</value>
   </data>
-  <data name="label1.Text" xml:space="preserve">
-    <value>Wireless connection assistant for VIVE(Preview Edition)</value>
-  </data>
-  <data name="label1.Size" type="System.Drawing.Size, System.Drawing">
-    <value>477, 24</value>
-  </data>
-  <data name="label1.Font" type="System.Drawing.Font, System.Drawing">
+  <data name="titleLabel.Font" type="System.Drawing.Font, System.Drawing">
     <value>Microsoft YaHei, 18px</value>
+  </data>
+  <data name="titleLabel.Dock" type="System.Windows.Forms.DockStyle, System.Windows.Forms">
+    <value>Fill</value>
+  </data>
+  <data name="titleLabel.Text" xml:space="preserve">
+    <value>Wireless connection assistant for VIVE</value>
+  </data>
+  <data name="titleLabel.Size" type="System.Drawing.Size, System.Drawing">
+    <value>448, 24</value>
+  </data>
+  <data name="&gt;&gt;panel1.ZOrder" xml:space="preserve">
+    <value>1</value>
   </data>
   <data name="&gt;&gt;closeButton.Parent" xml:space="preserve">
     <value>$this</value>
+  </data>
+  <data name="&gt;&gt;panel1.Parent" xml:space="preserve">
+    <value>$this</value>
+  </data>
+  <data name="&gt;&gt;titleLabel.Name" xml:space="preserve">
+    <value>titleLabel</value>
+  </data>
+  <data name="&gt;&gt;titleLabel.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Label, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="refresh.Location" type="System.Drawing.Point, System.Drawing">
+    <value>355, 133</value>
   </data>
   <data name="firmwareVersionLabel.TabIndex" type="System.Int32, mscorlib">
     <value>7</value>
@@ -202,7 +232,13 @@
     <value>139, 131</value>
   </data>
   <data name="&gt;&gt;customLabel1.ZOrder" xml:space="preserve">
-    <value>2</value>
+    <value>5</value>
+  </data>
+  <data name="&gt;&gt;titleLabel.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="&gt;&gt;titleLabel.Parent" xml:space="preserve">
+    <value>panel1</value>
   </data>
   <data name="firmwareVersionLabel.Font" type="System.Drawing.Font, System.Drawing">
     <value>Microsoft YaHei, 14px</value>
@@ -216,29 +252,38 @@
   <data name="&gt;&gt;customLabel1.Parent" xml:space="preserve">
     <value>$this</value>
   </data>
-  <data name="label1.Location" type="System.Drawing.Point, System.Drawing">
-    <value>11, 44</value>
+  <data name="refresh.FlatStyle" type="System.Windows.Forms.FlatStyle, System.Windows.Forms">
+    <value>Flat</value>
+  </data>
+  <data name="titleLabel.TabIndex" type="System.Int32, mscorlib">
+    <value>0</value>
+  </data>
+  <data name="&gt;&gt;panel1.Name" xml:space="preserve">
+    <value>panel1</value>
+  </data>
+  <data name="&gt;&gt;panel1.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Panel, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="versionLabel.Location" type="System.Drawing.Point, System.Drawing">
     <value>139, 105</value>
   </data>
-  <data name="label1.AutoSize" type="System.Boolean, mscorlib">
-    <value>True</value>
+  <data name="refresh.Size" type="System.Drawing.Size, System.Drawing">
+    <value>16, 16</value>
   </data>
   <data name="label3.Location" type="System.Drawing.Point, System.Drawing">
     <value>25, 88</value>
-  </data>
-  <data name="&gt;&gt;label1.ZOrder" xml:space="preserve">
-    <value>4</value>
   </data>
   <data name="&gt;&gt;$this.Name" xml:space="preserve">
     <value>AboutDialog</value>
   </data>
   <data name="&gt;&gt;$this.Type" xml:space="preserve">
-    <value>TPCASTWindows.BaseDialogForm, TPCASTWindows, Version=1.0.6.0, Culture=neutral, PublicKeyToken=null</value>
+    <value>TPCASTWindows.BaseDialogForm, TPCASTWindows, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null</value>
   </data>
-  <data name="&gt;&gt;label1.Parent" xml:space="preserve">
-    <value>$this</value>
+  <data name="panel1.TabIndex" type="System.Int32, mscorlib">
+    <value>9</value>
+  </data>
+  <data name="titleLabel.Location" type="System.Drawing.Point, System.Drawing">
+    <value>0, 0</value>
   </data>
   <data name="versionLabel.AutoSize" type="System.Boolean, mscorlib">
     <value>True</value>
@@ -249,17 +294,20 @@
   <data name="&gt;&gt;label3.Name" xml:space="preserve">
     <value>label3</value>
   </data>
-  <data name="&gt;&gt;label1.Type" xml:space="preserve">
-    <value>System.Windows.Forms.Label, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  <data name="&gt;&gt;refresh.Parent" xml:space="preserve">
+    <value>$this</value>
   </data>
-  <data name="&gt;&gt;label1.Name" xml:space="preserve">
-    <value>label1</value>
+  <data name="refresh.TabIndex" type="System.Int32, mscorlib">
+    <value>8</value>
+  </data>
+  <data name="&gt;&gt;refresh.ZOrder" xml:space="preserve">
+    <value>2</value>
   </data>
   <data name="&gt;&gt;customLabel1.Name" xml:space="preserve">
     <value>customLabel1</value>
   </data>
   <data name="&gt;&gt;customLabel1.Type" xml:space="preserve">
-    <value>TPCASTWindows.CustomLabel, TPCASTWindows, Version=1.0.6.0, Culture=neutral, PublicKeyToken=null</value>
+    <value>TPCASTWindows.CustomLabel, TPCASTWindows, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null</value>
   </data>
   <data name="&gt;&gt;versionLabel.Type" xml:space="preserve">
     <value>System.Windows.Forms.Label, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
@@ -279,13 +327,16 @@
   <data name="&gt;&gt;versionLabel.Parent" xml:space="preserve">
     <value>$this</value>
   </data>
-  <data name="label1.TabIndex" type="System.Int32, mscorlib">
-    <value>2</value>
-  </data>
   <data name="&gt;&gt;versionLabel.ZOrder" xml:space="preserve">
-    <value>1</value>
+    <value>4</value>
+  </data>
+  <data name="titleLabel.ImeMode" type="System.Windows.Forms.ImeMode, System.Windows.Forms">
+    <value>NoControl</value>
   </data>
   <data name="$this.AutoScaleDimensions" type="System.Drawing.SizeF, System.Drawing">
     <value>6, 12</value>
+  </data>
+  <data name="panel1.Location" type="System.Drawing.Point, System.Drawing">
+    <value>27, 44</value>
   </data>
 </root>

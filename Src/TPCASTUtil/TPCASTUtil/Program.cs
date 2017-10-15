@@ -65,23 +65,20 @@ namespace TPCASTUtil
 						return;
 					}
 				}
+				else if (args[0] == "kill")
+				{
+					if (args.Count<string>() > 1)
+					{
+						string text4 = args[1];
+						if (!string.IsNullOrEmpty(text4))
+						{
+							Program.killProcess(text4);
+							return;
+						}
+					}
+				}
 				else
 				{
-					if (args[0] == "kill")
-					{
-						Program.killProcess("TPCASTWindows.exe");
-						return;
-					}
-					if (args[0] == "killBA")
-					{
-						Program.killProcess("TPCAST_BA.exe");
-						return;
-					}
-					if (args[0] == "killBAM")
-					{
-						Program.killProcess("TPCAST_M.exe");
-						return;
-					}
 					if (args[0] == "properties")
 					{
 						DirectoryInfo[] directories = new DirectoryInfo(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\Microsoft").GetDirectories("TPCASTWindows*");
@@ -95,8 +92,8 @@ namespace TPCASTUtil
 					}
 					if (args[0] == "generate")
 					{
-						FileStream expr_1CB = new FileStream(Environment.CurrentDirectory + "\\configuration.ini", FileMode.Create);
-						StreamWriter streamWriter = new StreamWriter(expr_1CB);
+						FileStream expr_1B1 = new FileStream(Environment.CurrentDirectory + "\\configuration.ini", FileMode.Create);
+						StreamWriter streamWriter = new StreamWriter(expr_1B1);
 						if (args.Count<string>() > 1)
 						{
 							if (args[1] == "Group_1")
@@ -130,7 +127,7 @@ namespace TPCASTUtil
 						}
 						streamWriter.Flush();
 						streamWriter.Close();
-						expr_1CB.Close();
+						expr_1B1.Close();
 						return;
 					}
 					if (args[0] == "configuration")

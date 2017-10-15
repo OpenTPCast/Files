@@ -8,9 +8,9 @@ namespace TPCASTReboot
 	{
 		public static void addAutoRunOnce(string fullPath)
 		{
-			using (RegistryKey registryKey = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64))
+			using (RegistryKey registryKey = RegistryKey.OpenBaseKey(RegistryHive.CurrentUser, RegistryView.Registry64))
 			{
-				using (RegistryKey registryKey2 = registryKey.OpenSubKey("SOFTWARE\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\RunOnce", RegistryKeyPermissionCheck.ReadWriteSubTree, RegistryRights.FullControl))
+				using (RegistryKey registryKey2 = registryKey.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\RunOnce", RegistryKeyPermissionCheck.ReadWriteSubTree, RegistryRights.FullControl))
 				{
 					if (registryKey2 != null)
 					{
@@ -25,7 +25,7 @@ namespace TPCASTReboot
 		{
 			using (RegistryKey registryKey = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64))
 			{
-				using (RegistryKey registryKey2 = registryKey.OpenSubKey("SOFTWARE\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\RunOnce", RegistryKeyPermissionCheck.ReadWriteSubTree, RegistryRights.FullControl))
+				using (RegistryKey registryKey2 = registryKey.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\RunOnce", RegistryKeyPermissionCheck.ReadWriteSubTree, RegistryRights.FullControl))
 				{
 					if (registryKey2 != null)
 					{

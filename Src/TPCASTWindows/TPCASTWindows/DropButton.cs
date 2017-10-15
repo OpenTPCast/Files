@@ -67,7 +67,7 @@ namespace TPCASTWindows
 		{
 			base.OnClick(e);
 			int arg_63_0 = base.Location.X + base.Size.Width + this.contextMenuStrip.Size.Width;
-			int num = base.Location.Y + this.contextMenuStrip.Size.Height;
+			int _y = base.Location.Y + this.contextMenuStrip.Size.Height;
 			if (arg_63_0 < this.WorkSizeX - 8)
 			{
 				this.x = base.Size.Width;
@@ -76,7 +76,7 @@ namespace TPCASTWindows
 			{
 				this.x = 0 - this.contextMenuStrip.Size.Width;
 			}
-			if (num < this.WorkSizeY)
+			if (_y < this.WorkSizeY)
 			{
 				this.y = 0;
 			}

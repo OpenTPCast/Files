@@ -403,7 +403,7 @@ namespace TPCASTWindows.Utils
 			if (!this.isListening)
 			{
 				this.devices = new TPcastRemoteDevices();
-				this.devices.add_DevStsChgEvent(new TPcastDevStsChgEventHandler(this.Devices_DevStsChgEvent));
+				this.devices.DevStsChgEvent += new TPcastDevStsChgEventHandler(this.Devices_DevStsChgEvent);
 				ControlConnectModel.log.Trace("TPcastStartChecking");
 				this.devices.TPcastStartChecking();
 				this.isListening = true;
@@ -412,10 +412,11 @@ namespace TPCASTWindows.Utils
 			int count = -1;
 			int status = -1;
 			ControlConnectModel.GetTPcastDevStatus(ref count, ref status);
-			TPcastDeviceStatus args = new TPcastDeviceStatus();
-			args.set_Count(count);
-			args.set_Status(status);
-			this.Devices_DevStsChgEvent(null, args);
+			this.Devices_DevStsChgEvent(null, new TPcastDeviceStatus
+			{
+				Count = count,
+				Status = status
+			});
 		}
 
 		private void addDevicesStatusListener2()
@@ -424,7 +425,7 @@ namespace TPCASTWindows.Utils
 			if (this.devices == null)
 			{
 				this.devices = new TPcastRemoteDevices();
-				this.devices.add_DevStsChgEvent(new TPcastDevStsChgEventHandler(this.Devices_DevStsChgEvent2));
+				this.devices.DevStsChgEvent += new TPcastDevStsChgEventHandler(this.Devices_DevStsChgEvent2);
 			}
 			if (!this.isListening)
 			{
@@ -439,10 +440,11 @@ namespace TPCASTWindows.Utils
 				int count = -1;
 				int status = -1;
 				ControlConnectModel.GetTPcastDevStatus(ref count, ref status);
-				TPcastDeviceStatus args = new TPcastDeviceStatus();
-				args.set_Count(count);
-				args.set_Status(status);
-				this.Devices_DevStsChgEvent(null, args);
+				this.Devices_DevStsChgEvent(null, new TPcastDeviceStatus
+				{
+					Count = count,
+					Status = status
+				});
 			}
 		}
 
@@ -459,8 +461,8 @@ namespace TPCASTWindows.Utils
 		private void Devices_DevStsChgEvent(object comp, EventArgs CallerContext)
 		{
 			TPcastDeviceStatus expr_06 = (TPcastDeviceStatus)CallerContext;
-			int deviceCount = expr_06.get_Count();
-			int deviceState = expr_06.get_Status();
+			int deviceCount = expr_06.Count;
+			int deviceState = expr_06.Status;
 			ControlConnectModel.log.Trace(string.Concat(new object[]
 			{
 				"Devices_DevStsChgEventcount = ",
@@ -515,8 +517,8 @@ namespace TPCASTWindows.Utils
 		private void Devices_DevStsChgEvent2(object comp, EventArgs CallerContext)
 		{
 			TPcastDeviceStatus expr_06 = (TPcastDeviceStatus)CallerContext;
-			int deviceCount = expr_06.get_Count();
-			int deviceState = expr_06.get_Status();
+			int deviceCount = expr_06.Count;
+			int deviceState = expr_06.Status;
 			ControlConnectModel.log.Trace(string.Concat(new object[]
 			{
 				"Devices_DevStsChgEventcount = ",

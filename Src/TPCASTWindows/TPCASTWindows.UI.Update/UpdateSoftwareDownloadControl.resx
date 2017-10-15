@@ -196,7 +196,7 @@
     <value>$this</value>
   </data>
   <data name="&gt;&gt;customProgressBar.Type" xml:space="preserve">
-    <value>TPCASTWindows.Custom.CustomProgressBar, TPCASTWindows, Version=1.0.5.0, Culture=neutral, PublicKeyToken=null</value>
+    <value>TPCASTWindows.Custom.CustomProgressBar, TPCASTWindows, Version=1.1.0.0, Culture=neutral, PublicKeyToken=null</value>
   </data>
   <data name="&gt;&gt;customProgressBar.Name" xml:space="preserve">
     <value>customProgressBar</value>
@@ -211,7 +211,7 @@
     <value>messageLabel</value>
   </data>
   <data name="&gt;&gt;messageLabel.Type" xml:space="preserve">
-    <value>TPCASTWindows.CustomLabel, TPCASTWindows, Version=1.0.5.0, Culture=neutral, PublicKeyToken=null</value>
+    <value>TPCASTWindows.CustomLabel, TPCASTWindows, Version=1.1.0.0, Culture=neutral, PublicKeyToken=null</value>
   </data>
   <data name="messageLabel.TabIndex" type="System.Int32, mscorlib">
     <value>30</value>

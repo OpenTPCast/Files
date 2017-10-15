@@ -262,7 +262,7 @@
     <value>customLabel1</value>
   </data>
   <data name="&gt;&gt;customLabel1.Type" xml:space="preserve">
-    <value>TPCASTWindows.CustomLabel, TPCASTWindows, Version=1.0.5.0, Culture=neutral, PublicKeyToken=null</value>
+    <value>TPCASTWindows.CustomLabel, TPCASTWindows, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null</value>
   </data>
   <data name="&gt;&gt;waitButton.ZOrder" xml:space="preserve">
     <value>4</value>

@@ -518,7 +518,7 @@ complete</value>
     <value>True</value>
   </data>
   <data name="progressBox.Size" type="System.Drawing.Size, System.Drawing">
-    <value>118, 22</value>
+    <value>378, 67</value>
   </data>
   <data name="&gt;&gt;label4.ZOrder" xml:space="preserve">
     <value>12</value>
@@ -626,7 +626,7 @@ complete</value>
     <value>$this</value>
   </data>
   <data name="progressBox.Location" type="System.Drawing.Point, System.Drawing">
-    <value>227, 47</value>
+    <value>109, 21</value>
   </data>
   <data name="&gt;&gt;label4.Type" xml:space="preserve">
     <value>System.Windows.Forms.Label, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
