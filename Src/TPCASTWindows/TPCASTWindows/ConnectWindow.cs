@@ -233,7 +233,7 @@ namespace TPCASTWindows
 				this.backButton.Visible = true;
 				this.messageLabel.Text = "连接失败！";
 			}
-			this.progressBox.Image = Resources.connect_success_progres;
+			this.progressBox.Image = Resources.connect_success_progress;
 			if (Settings.Default.displayGuide)
 			{
 				this.ShowGuideImage();

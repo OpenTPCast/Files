@@ -36,22 +36,22 @@ namespace TPCASTWindows
 		{
 			if (this.win7)
 			{
-				BluetoothDialogDriverControl value = new BluetoothDialogDriverControl();
+				BluetoothDialogDriverControl driveControl = new BluetoothDialogDriverControl();
 				this.dialogGroup.Controls.Clear();
-				this.dialogGroup.Controls.Add(value);
+				this.dialogGroup.Controls.Add(driveControl);
 				return;
 			}
 			if (this.hasBluetooth)
 			{
-				BluetoothDialogControl bluetoothDialogControl = new BluetoothDialogControl();
-				BluetoothDialogControl bluetoothDialogControl2 = bluetoothDialogControl;
-				bluetoothDialogControl2.OnOffButtonClick = (BluetoothDialogControl.OnOffButtonDelegate)Delegate.Combine(bluetoothDialogControl2.OnOffButtonClick, new BluetoothDialogControl.OnOffButtonDelegate(this.OffButtonClick));
-				bluetoothDialogControl2 = bluetoothDialogControl;
-				bluetoothDialogControl2.OnSlowFlashingClick = (BluetoothDialogControl.OnSlowFlashingButtonDelegate)Delegate.Combine(bluetoothDialogControl2.OnSlowFlashingClick, new BluetoothDialogControl.OnSlowFlashingButtonDelegate(this.SlowButtonClick));
-				bluetoothDialogControl2 = bluetoothDialogControl;
-				bluetoothDialogControl2.OnFastFlashingClick = (BluetoothDialogControl.OnFastFlashingButtonDelegate)Delegate.Combine(bluetoothDialogControl2.OnFastFlashingClick, new BluetoothDialogControl.OnFastFlashingButtonDelegate(this.FastButtonClick));
+				BluetoothDialogControl bluetoothControl = new BluetoothDialogControl();
+				BluetoothDialogControl bluetoothDialogControl = bluetoothControl;
+				bluetoothDialogControl.OnOffButtonClick = (BluetoothDialogControl.OnOffButtonDelegate)Delegate.Combine(bluetoothDialogControl.OnOffButtonClick, new BluetoothDialogControl.OnOffButtonDelegate(this.OffButtonClick));
+				bluetoothDialogControl = bluetoothControl;
+				bluetoothDialogControl.OnSlowFlashingClick = (BluetoothDialogControl.OnSlowFlashingButtonDelegate)Delegate.Combine(bluetoothDialogControl.OnSlowFlashingClick, new BluetoothDialogControl.OnSlowFlashingButtonDelegate(this.SlowButtonClick));
+				bluetoothDialogControl = bluetoothControl;
+				bluetoothDialogControl.OnFastFlashingClick = (BluetoothDialogControl.OnFastFlashingButtonDelegate)Delegate.Combine(bluetoothDialogControl.OnFastFlashingClick, new BluetoothDialogControl.OnFastFlashingButtonDelegate(this.FastButtonClick));
 				this.dialogGroup.Controls.Clear();
-				this.dialogGroup.Controls.Add(bluetoothDialogControl);
+				this.dialogGroup.Controls.Add(bluetoothControl);
 				if (this.foundTPCAST)
 				{
 					this.FastButtonClick();
@@ -60,39 +60,39 @@ namespace TPCASTWindows
 			}
 			else
 			{
-				BluetoothDialogNoDongleControl bluetoothDialogNoDongleControl = new BluetoothDialogNoDongleControl();
-				bluetoothDialogNoDongleControl.OnRetryClickListener = new BluetoothDialogNoDongleControl.OnRetryButtonClickDelegate(this.retry);
+				BluetoothDialogNoDongleControl noDongleControl = new BluetoothDialogNoDongleControl();
+				noDongleControl.OnRetryClickListener = new BluetoothDialogNoDongleControl.OnRetryButtonClickDelegate(this.retry);
 				this.dialogGroup.Controls.Clear();
-				this.dialogGroup.Controls.Add(bluetoothDialogNoDongleControl);
+				this.dialogGroup.Controls.Add(noDongleControl);
 			}
 		}
 
 		public void OffButtonClick()
 		{
-			BluetoothDialogOffControl bluetoothDialogOffControl = new BluetoothDialogOffControl();
-			bluetoothDialogOffControl.showSkip = this.showSkip;
-			bluetoothDialogOffControl.OnSkipBluetoothClick = new BluetoothDialogOffControl.OnSkipBluetoothClickDelegate(this.SkipBluetooth);
-			bluetoothDialogOffControl.OnRetryClickListener = new BluetoothDialogOffControl.OnRetryButtonClickDelegate(this.retry);
+			BluetoothDialogOffControl offControl = new BluetoothDialogOffControl();
+			offControl.showSkip = this.showSkip;
+			offControl.OnSkipBluetoothClick = new BluetoothDialogOffControl.OnSkipBluetoothClickDelegate(this.SkipBluetooth);
+			offControl.OnRetryClickListener = new BluetoothDialogOffControl.OnRetryButtonClickDelegate(this.retry);
 			this.dialogGroup.Controls.Clear();
-			this.dialogGroup.Controls.Add(bluetoothDialogOffControl);
+			this.dialogGroup.Controls.Add(offControl);
 		}
 
 		public void SlowButtonClick()
 		{
-			BluetoothDialogFlashingSlowControl bluetoothDialogFlashingSlowControl = new BluetoothDialogFlashingSlowControl();
-			bluetoothDialogFlashingSlowControl.OnRetryClickListener = new BluetoothDialogFlashingSlowControl.OnRetryButtonClickDelegate(this.retry);
+			BluetoothDialogFlashingSlowControl slowControl = new BluetoothDialogFlashingSlowControl();
+			slowControl.OnRetryClickListener = new BluetoothDialogFlashingSlowControl.OnRetryButtonClickDelegate(this.retry);
 			this.dialogGroup.Controls.Clear();
-			this.dialogGroup.Controls.Add(bluetoothDialogFlashingSlowControl);
+			this.dialogGroup.Controls.Add(slowControl);
 		}
 
 		public void FastButtonClick()
 		{
-			BluetoothDialogFlashingFastControl bluetoothDialogFlashingFastControl = new BluetoothDialogFlashingFastControl();
-			bluetoothDialogFlashingFastControl.showSkip = this.showSkip;
-			bluetoothDialogFlashingFastControl.OnSkipBluetoothClick = new BluetoothDialogFlashingFastControl.OnSkipBluetoothClickDelegate(this.SkipBluetooth);
-			bluetoothDialogFlashingFastControl.OnRetryClickListener = new BluetoothDialogFlashingFastControl.OnRetryButtonClickDelegate(this.retry);
+			BluetoothDialogFlashingFastControl fastControl = new BluetoothDialogFlashingFastControl();
+			fastControl.showSkip = this.showSkip;
+			fastControl.OnSkipBluetoothClick = new BluetoothDialogFlashingFastControl.OnSkipBluetoothClickDelegate(this.SkipBluetooth);
+			fastControl.OnRetryClickListener = new BluetoothDialogFlashingFastControl.OnRetryButtonClickDelegate(this.retry);
 			this.dialogGroup.Controls.Clear();
-			this.dialogGroup.Controls.Add(bluetoothDialogFlashingFastControl);
+			this.dialogGroup.Controls.Add(fastControl);
 		}
 
 		public void retry()

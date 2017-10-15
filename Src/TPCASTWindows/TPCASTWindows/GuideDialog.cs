@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Windows.Forms;
 using TPCASTWindows.Properties;
-using TPCASTWindows.Resources;
 
 namespace TPCASTWindows
 {
@@ -27,7 +26,7 @@ namespace TPCASTWindows
 
 		private void tutorialLinkLabel_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
 		{
-			Process.Start("iexplore", Localization.tutorialLink);
+			Process.Start("iexplore", Resources.tutorialLink);
 		}
 
 		private void okButton_Click(object sender, EventArgs e)
@@ -54,33 +53,34 @@ namespace TPCASTWindows
 		private void InitializeComponent()
 		{
 			this.components = new Container();
-			ComponentResourceManager arg_79_0 = new ComponentResourceManager(typeof(GuideDialog));
+			ComponentResourceManager arg_58_0 = new ComponentResourceManager(typeof(GuideDialog));
 			this.okButton = new Button();
 			this.customLabel1 = new CustomLabel(this.components);
 			this.tutorialLinkLabel = new LinkLabel();
 			this.customLabel2 = new CustomLabel(this.components);
 			base.SuspendLayout();
+			arg_58_0.ApplyResources(this.closeButton, "closeButton");
 			this.closeButton.FlatAppearance.BorderSize = 0;
+			arg_58_0.ApplyResources(this.okButton, "okButton");
 			this.okButton.BackgroundImage = Resources.blue_background_1;
-			arg_79_0.ApplyResources(this.okButton, "okButton");
 			this.okButton.FlatAppearance.BorderSize = 0;
 			this.okButton.ForeColor = Color.White;
 			this.okButton.Name = "okButton";
 			this.okButton.UseVisualStyleBackColor = false;
 			this.okButton.Click += new EventHandler(this.okButton_Click);
-			arg_79_0.ApplyResources(this.customLabel1, "customLabel1");
+			arg_58_0.ApplyResources(this.customLabel1, "customLabel1");
 			this.customLabel1.LineDistance = 2;
 			this.customLabel1.Name = "customLabel1";
-			arg_79_0.ApplyResources(this.tutorialLinkLabel, "tutorialLinkLabel");
+			arg_58_0.ApplyResources(this.tutorialLinkLabel, "tutorialLinkLabel");
 			this.tutorialLinkLabel.LinkBehavior = LinkBehavior.NeverUnderline;
 			this.tutorialLinkLabel.LinkColor = Color.FromArgb(42, 173, 223);
 			this.tutorialLinkLabel.Name = "tutorialLinkLabel";
 			this.tutorialLinkLabel.TabStop = true;
 			this.tutorialLinkLabel.LinkClicked += new LinkLabelLinkClickedEventHandler(this.tutorialLinkLabel_LinkClicked);
-			arg_79_0.ApplyResources(this.customLabel2, "customLabel2");
+			arg_58_0.ApplyResources(this.customLabel2, "customLabel2");
 			this.customLabel2.LineDistance = 2;
 			this.customLabel2.Name = "customLabel2";
-			arg_79_0.ApplyResources(this, "$this");
+			arg_58_0.ApplyResources(this, "$this");
 			base.Controls.Add(this.customLabel2);
 			base.Controls.Add(this.tutorialLinkLabel);
 			base.Controls.Add(this.customLabel1);

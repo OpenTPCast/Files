@@ -1,3 +1,4 @@
+using NLog;
 using RestSharp;
 using System;
 using System.ComponentModel;
@@ -9,16 +10,21 @@ using System.Reflection;
 using System.Threading;
 using System.Windows.Forms;
 using TPCASTWindows.Properties;
-using TPCASTWindows.Resources;
+using TPCASTWindows.UI.Main;
 using TPCASTWindows.UI.Update;
+using TPCASTWindows.Utils;
 
 namespace TPCASTWindows
 {
-	public class ControlCheckWindow : UserControl, SocketConnectCallback, SocketExceptonCallback
+	public class ControlCheckWindow : UserControl, SocketConnectCallback, SocketExceptonCallback, ConnectStatusCallback
 	{
 		private delegate void OnWirelessFinishDelegate();
 
 		public delegate void OnControlSuccessDelegate();
+
+		private static Logger log = LogManager.GetCurrentClassLogger();
+
+		private ConnectModel connectModel;
 
 		private SocketModel socketModel;
 
@@ -26,13 +32,13 @@ namespace TPCASTWindows
 
 		private ForceUpdateDialog forceDialog;
 
-		public static bool isChecking;
+		public static bool isChecking = false;
 
 		private ControlCheckWindow.OnWirelessFinishDelegate OnWirelessFinishListener;
 
 		private Thread WirelessThread;
 
-		public static bool isAllPass;
+		public static bool isAllPass = false;
 
 		public ControlCheckWindow.OnControlSuccessDelegate OnControlSuccess;
 
@@ -80,16 +86,97 @@ namespace TPCASTWindows
 
 		public ControlCheckWindow()
 		{
+			ControlCheckWindow.log.Trace("ControlCheckWindow");
 			this.InitializeComponent();
-			Console.WriteLine("ControlCheckWindow");
-			Util.BeginCheckControl = new Util.BeginCheckControlDelegate(this.BeginCheckControl);
-			Util.OnCheckRouterConnected = new Util.OnCheckRouterConnectedDelegate(this.OnRouterConnected);
-			Util.OnCheckHostConnect = new Util.OnCheckHostConnectDelegate(this.OnHostConnected);
-			Util.OnCheckControlError = new Util.OnCheckControlErrorDelegate(this.OnControlConnectedError);
+			ControlCheckWindow.log.Trace("after ControlCheckWindow");
+			this.connectModel = new ConnectModel(this);
+			this.connectModel.setConnectStatusCallback(this);
 			this.OnWirelessFinishListener = new ControlCheckWindow.OnWirelessFinishDelegate(this.OnWirelessFinish);
 			this.socketModel = new SocketModel(this);
 			this.addSocketCallback();
 			this.initView();
+			ControlCheckWindow.log.Trace("ip == " + ConfigureUtil.AdapterIP());
+			ControlCheckWindow.log.Trace("type = " + ConfigureUtil.getClientType());
+		}
+
+		public void MainFormShown()
+		{
+			ControlCheckWindow.log.Trace("MainFormShown");
+		}
+
+		public void OnFormClosing()
+		{
+			if (this.connectModel != null)
+			{
+				this.connectModel.unInit();
+			}
+		}
+
+		public void OnSplashImageInvisible()
+		{
+			new Thread(delegate
+			{
+				Thread.Sleep(2500);
+				base.Invoke(new MethodInvoker(delegate
+				{
+					this.showSplashForm();
+				}));
+			}).Start();
+			this.checkRouterSSID();
+		}
+
+		private void showSplashForm()
+		{
+			if (Settings.Default.showGuideDialog)
+			{
+				new SplashForm
+				{
+					OnSplashFormClosing = new SplashForm.OnSplashFormClosingDelegate(this.OnSplashFormClosing)
+				}.Show();
+			}
+		}
+
+		private void OnSplashFormClosing()
+		{
+			Settings.Default.showGuideDialog = false;
+			Settings.Default.Save();
+		}
+
+		private void checkRouterSSID()
+		{
+			if (this.connectModel != null)
+			{
+				this.connectModel.InitCheckRouterSSID();
+			}
+		}
+
+		public void OnInitCheckRouterSSIDFinish(bool modified)
+		{
+			if (modified)
+			{
+				this.connectAdapter();
+				return;
+			}
+			this.modifyWifiSSID();
+		}
+
+		public void OnInitCheckRouterFail()
+		{
+			this.connectAdapter();
+		}
+
+		private void modifyWifiSSID()
+		{
+			Util.showGrayBackground();
+			RouterDialog expr_0A = new RouterDialog();
+			expr_0A.setCloseButtonVisibility(false);
+			expr_0A.OnRouterDialogClose = new RouterDialog.OnRouterDialogCloseDelegate(this.OnRouterDialogClose);
+			expr_0A.Show(Util.sContext);
+		}
+
+		private void OnRouterDialogClose()
+		{
+			this.connectAdapter();
 		}
 
 		public void addSocketCallback()
@@ -110,19 +197,11 @@ namespace TPCASTWindows
 			}
 		}
 
-		public void disconnectSocket()
-		{
-			if (this.socketModel != null)
-			{
-				this.socketModel.disconnect();
-			}
-		}
-
 		private void connectAdapter()
 		{
 			if (this.socketModel != null)
 			{
-				this.socketModel.connect();
+				this.socketModel.GetVersion();
 			}
 		}
 
@@ -132,12 +211,13 @@ namespace TPCASTWindows
 			{
 				if (this.socketModel != null)
 				{
-					this.socketModel.getVerion();
+					this.socketModel.GetVersion();
 					return;
 				}
 			}
 			else
 			{
+				ControlCheckWindow.log.Trace("connect fail");
 				this.requestForceUpdate("", "");
 			}
 		}
@@ -156,40 +236,36 @@ namespace TPCASTWindows
 			Thread.Sleep(5000);
 			if (this.socketModel != null)
 			{
-				this.socketModel.connect();
+				this.socketModel.GetVersion();
 			}
 		}
 
 		public void OnVersionReceive(string version)
 		{
-			Console.WriteLine("version = " + version);
+			ControlCheckWindow.log.Trace("version = " + version);
 			this.adapterVersion = version;
 			if (this.socketModel != null)
 			{
-				this.socketModel.getMac();
+				this.socketModel.GetMac();
 			}
 		}
 
 		public void OnMacReceive(string mac)
 		{
-			Console.WriteLine("mac = " + mac);
+			ControlCheckWindow.log.Trace("mac = " + mac);
 			this.requestForceUpdate(this.adapterVersion, mac);
 		}
 
 		public void OnSendFail()
 		{
-			Console.WriteLine("OnSendFail");
-			if (this.forceDialog == null || !this.forceDialog.IsAccessible)
-			{
-				this.forceDialog = new ForceUpdateDialog();
-				this.forceDialog.OnRetry = new ForceUpdateDialog.OnRetryDelegate(this.connectAdapter);
-				Util.showGrayBackground();
-				this.forceDialog.ShowDialog(this);
-			}
+			ControlCheckWindow.log.Trace("OnSendFail");
+			this.requestForceUpdate("", "");
 		}
 
 		public void OnReceiveTimeout()
 		{
+			ControlCheckWindow.log.Trace("OnReceiveTimeout");
+			this.requestForceUpdate("", "");
 		}
 
 		private void requestForceUpdate(string adapterVersion = "", string sn = "")
@@ -204,34 +280,36 @@ namespace TPCASTWindows
 				currentSoftwareVersion.Build
 			});
 			Directory.CreateDirectory(Constants.downloadPath);
+			ControlCheckWindow.log.Trace("CreateDirectory");
 			Client.getInstance().requestUpdate(softwareVersion, adapterVersion, sn, delegate(IRestResponse<Update> response)
 			{
+				ControlCheckWindow.log.Trace("requestUpdate");
 				if (response != null && response.StatusCode == HttpStatusCode.OK && response.Data != null && response.Data.roms != null)
 				{
-					string text = "";
-					string text2 = "";
-					string text3 = "";
+					string adapterUrl = "";
+					string adapterMd5 = "";
+					string updateAdapterVersionString = "";
 					bool isAdapterDownloaded = false;
-					string text4 = "";
-					string text5 = "";
+					string softwareUrl = "";
+					string softwareMd5 = "";
 					bool isSoftwareDownloaded = false;
 					if (response.Data.roms.adapter != null && !string.IsNullOrEmpty(adapterVersion) && !string.IsNullOrEmpty(sn))
 					{
-						UpdateMessage forced = response.Data.roms.adapter.forced;
-						if (forced != null)
+						UpdateMessage updateMessage = response.Data.roms.adapter.forced;
+						if (updateMessage != null)
 						{
-							text3 = forced.version;
-							Version arg_C9_0 = new Version(forced.version);
-							Version value = new Version(adapterVersion);
-							if (arg_C9_0.CompareTo(value) > 0)
+							updateAdapterVersionString = updateMessage.version;
+							Version arg_D8_0 = new Version(updateMessage.version);
+							Version currentAdapterVersion = new Version(adapterVersion);
+							if (arg_D8_0.CompareTo(currentAdapterVersion) > 0)
 							{
-								text = forced.url;
-								text2 = forced.md5;
+								adapterUrl = updateMessage.url;
+								adapterMd5 = updateMessage.md5;
 								if (File.Exists(Constants.updateAdapterFilePath))
 								{
-									string mD5HashFromFile = CryptoUtil.GetMD5HashFromFile(Constants.updateAdapterFilePath);
-									Console.WriteLine("cur md5 = " + mD5HashFromFile);
-									if (mD5HashFromFile.Equals(forced.md5))
+									string currentMd5 = CryptoUtil.GetMD5HashFromFile(Constants.updateAdapterFilePath);
+									ControlCheckWindow.log.Trace("cur md5 = " + currentMd5);
+									if (currentMd5.Equals(updateMessage.md5))
 									{
 										isAdapterDownloaded = true;
 									}
@@ -241,41 +319,64 @@ namespace TPCASTWindows
 					}
 					if (response.Data.roms.software != null)
 					{
-						UpdateMessage forced2 = response.Data.roms.software.forced;
-						if (forced2 != null && new Version(forced2.version).CompareTo(currentSoftwareVersion) > 0)
+						UpdateMessage updateMessage2 = response.Data.roms.software.forced;
+						if (updateMessage2 != null && new Version(updateMessage2.version).CompareTo(currentSoftwareVersion) > 0)
 						{
-							text4 = forced2.url;
-							text5 = forced2.md5;
-							if (File.Exists(Constants.updateSoftwareFilePath) && CryptoUtil.GetMD5HashFromFile(Constants.updateSoftwareFilePath).Equals(forced2.md5))
+							softwareUrl = updateMessage2.url;
+							softwareMd5 = updateMessage2.md5;
+							if (File.Exists(Constants.updateSoftwareFilePath) && CryptoUtil.GetMD5HashFromFile(Constants.updateSoftwareFilePath).Equals(updateMessage2.md5))
 							{
 								isSoftwareDownloaded = true;
 							}
 						}
 					}
-					Console.WriteLine("adapterUrl = " + text);
-					Console.WriteLine("adapterMd5 = " + text2);
-					Console.WriteLine("softwareUrl = " + text4);
-					Console.WriteLine("softwareMd5 = " + text5);
-					Console.WriteLine("updateAdapterVersionString = " + text3);
-					if (!string.IsNullOrEmpty(text) || !string.IsNullOrEmpty(text4))
+					ControlCheckWindow.log.Trace("adapterUrl = " + adapterUrl);
+					ControlCheckWindow.log.Trace("adapterMd5 = " + adapterMd5);
+					ControlCheckWindow.log.Trace("softwareUrl = " + softwareUrl);
+					ControlCheckWindow.log.Trace("softwareMd5 = " + softwareMd5);
+					ControlCheckWindow.log.Trace("updateAdapterVersionString = " + updateAdapterVersionString);
+					if (!string.IsNullOrEmpty(adapterUrl) || !string.IsNullOrEmpty(softwareUrl))
 					{
+						Util.showGrayBackground();
 						this.forceDialog = new ForceUpdateDialog();
-						this.forceDialog.adapterUrl = text;
-						this.forceDialog.adapterMd5 = text2;
-						this.forceDialog.updateAdapterVersionString = text3;
+						this.forceDialog.adapterUrl = adapterUrl;
+						this.forceDialog.adapterMd5 = adapterMd5;
+						this.forceDialog.updateAdapterVersionString = updateAdapterVersionString;
 						this.forceDialog.isAdapterDownloaded = isAdapterDownloaded;
-						this.forceDialog.softwareUrl = text4;
-						this.forceDialog.softwareMd5 = text5;
+						this.forceDialog.softwareUrl = softwareUrl;
+						this.forceDialog.softwareMd5 = softwareMd5;
 						this.forceDialog.isSoftwareDownloaded = isSoftwareDownloaded;
 						this.forceDialog.OnRetry = new ForceUpdateDialog.OnRetryDelegate(this.connectAdapter);
-						Util.showGrayBackground();
-						this.forceDialog.ShowDialog(this);
+						this.forceDialog.Show(Util.sContext);
+						return;
 					}
 				}
+				ControlCheckWindow.log.Trace("driver");
+				this.checkDriver();
 			});
 		}
 
-		private void initView()
+		private void checkDriver()
+		{
+			if (UsbIPUtil.isDriverInstalled())
+			{
+				if (!UsbIPUtil.isServiceOk())
+				{
+					BroadcastModel.instance.send(92);
+					Util.showGrayBackground();
+					new ServerExceptionDialog().Show(Util.sContext);
+					return;
+				}
+			}
+			else
+			{
+				BroadcastModel.instance.send(91);
+				Util.showGrayBackground();
+				new DriverDialog().Show(Util.sContext);
+			}
+		}
+
+		public void initView()
 		{
 			this.progressBox.Image = Resources.connect_normal_progress;
 			this.indicatorRouter.Image = Resources.router_normal;
@@ -291,18 +392,20 @@ namespace TPCASTWindows
 			this.systemLabel.Visible = false;
 			this.startButton.Visible = true;
 			ControlCheckWindow.isChecking = false;
+			ControlCheckWindow.isAllPass = false;
 		}
 
 		private void ControlCheckWindow_Load(object sender, EventArgs e)
 		{
+			ControlCheckWindow.log.Trace("ControlCheckWindow_Load");
 			this.startButton.Focus();
 		}
 
 		private void startButton_Click(object sender, EventArgs e)
 		{
+			ControlCheckWindow.log.Trace("startButton_Click");
 			if (!ControlCheckWindow.isChecking)
 			{
-				Console.WriteLine("startButton_Click");
 				this.CheckControl();
 			}
 		}
@@ -310,52 +413,68 @@ namespace TPCASTWindows
 		private void CheckControl()
 		{
 			ControlCheckWindow.isChecking = true;
-			Util.CheckControl();
+			if (this.connectModel != null)
+			{
+				this.connectModel.CheckControl();
+			}
 		}
 
-		private void BeginCheckControl()
+		public void BeginCheckControl()
 		{
 			this.progressBox.Image = Resources.connnect_progress;
 			this.startButton.Visible = false;
-			this.routerLabel.Text = Localization.routerChecking;
+			this.routerLabel.Text = Resources.routerChecking;
 			this.routerLabel.Visible = true;
 			this.raspberryLabel.Visible = false;
 			this.systemLabel.Visible = false;
 			this.messageLabel.Visible = false;
 		}
 
-		private void OnRouterConnected()
+		public void OnCheckRouterSSIDFinish(bool modified)
+		{
+			if (!modified)
+			{
+				Util.showGrayBackground();
+				RouterDialog expr_0D = new RouterDialog();
+				expr_0D.setCloseButtonVisibility(true);
+				expr_0D.OnRouterDialogClose = new RouterDialog.OnRouterDialogCloseDelegate(this.DialogClose);
+				expr_0D.Show(Util.sContext);
+			}
+		}
+
+		public void OnCheckRouterConnected()
 		{
 			this.indicatorRouter.Image = Resources.router_success;
 			this.lineRouter.Image = Resources.line_loaded;
-			this.routerLabel.Text = Localization.routerSuccess;
-			this.raspberryLabel.Text = Localization.raspberryChecking;
+			this.routerLabel.Text = Resources.routerSuccess;
+			this.raspberryLabel.Text = Resources.raspberryChecking;
 			this.raspberryLabel.Visible = true;
 		}
 
-		private void OnHostConnected()
+		public void OnCheckHostConnect()
 		{
 			this.indicatorRaspberry.Image = Resources.raspberry_success;
 			this.lineRaspberry.Image = Resources.line_loaded;
-			this.raspberryLabel.Text = Localization.raspberrySuccess;
-			this.systemLabel.Text = Localization.systemChecking;
+			this.raspberryLabel.Text = Resources.raspberrySuccess;
+			this.systemLabel.Text = Resources.systemChecking;
 			this.systemLabel.Visible = true;
 		}
 
-		private void OnControlConnectedError(int error)
+		public void OnCheckControlError(int error)
 		{
 			if (error == -1001)
 			{
 				ControlCheckWindow.isChecking = false;
 				this.indicatorRouter.Image = Resources.router_fail;
 				this.lineRouter.Image = Resources.line_unload;
-				this.routerLabel.Text = Localization.routerFail;
-				ControlDialog expr_43 = new ControlDialog();
-				expr_43.OnRetry = new ControlDialog.OnRetryDelegate(this.CheckControl);
-				expr_43.OnCloseClick = new BaseDialogForm.OnCloseClickDelegate(this.DialogClose);
-				expr_43.hasRouter = false;
+				this.routerLabel.Text = Resources.routerFail;
 				Util.showGrayBackground();
-				expr_43.ShowDialog(this);
+				new ControlDialog
+				{
+					OnRetry = new ControlDialog.OnRetryDelegate(this.CheckControl),
+					OnCloseClick = new BaseDialogForm.OnCloseClickDelegate(this.DialogClose),
+					hasRouter = false
+				}.Show(Util.sContext);
 				return;
 			}
 			if (error == -1002)
@@ -363,12 +482,13 @@ namespace TPCASTWindows
 				ControlCheckWindow.isChecking = false;
 				this.indicatorRaspberry.Image = Resources.raspberry_fail;
 				this.lineRaspberry.Image = Resources.line_unload;
-				this.raspberryLabel.Text = Localization.raspberryFail;
-				ControlDialog expr_BE = new ControlDialog();
-				expr_BE.OnRetry = new ControlDialog.OnRetryDelegate(this.CheckControl);
-				expr_BE.OnCloseClick = new BaseDialogForm.OnCloseClickDelegate(this.DialogClose);
+				this.raspberryLabel.Text = Resources.raspberryFail;
 				Util.showGrayBackground();
-				expr_BE.ShowDialog(this);
+				new ControlDialog
+				{
+					OnRetry = new ControlDialog.OnRetryDelegate(this.CheckControl),
+					OnCloseClick = new BaseDialogForm.OnCloseClickDelegate(this.DialogClose)
+				}.Show(Util.sContext);
 				return;
 			}
 			if (error == -1000)
@@ -376,12 +496,13 @@ namespace TPCASTWindows
 				ControlCheckWindow.isChecking = false;
 				this.indicatorSystem.Image = Resources.system_fail;
 				this.lineSystem.Image = Resources.line_unload;
-				this.systemLabel.Text = Localization.systemFail;
-				ControlDialog expr_132 = new ControlDialog();
-				expr_132.OnRetry = new ControlDialog.OnRetryDelegate(this.CheckControl);
-				expr_132.OnCloseClick = new BaseDialogForm.OnCloseClickDelegate(this.DialogClose);
+				this.systemLabel.Text = Resources.systemFail;
 				Util.showGrayBackground();
-				expr_132.ShowDialog(this);
+				new ControlDialog
+				{
+					OnRetry = new ControlDialog.OnRetryDelegate(this.CheckControl),
+					OnCloseClick = new BaseDialogForm.OnCloseClickDelegate(this.DialogClose)
+				}.Show(Util.sContext);
 				return;
 			}
 			if (error == -2000)
@@ -389,12 +510,13 @@ namespace TPCASTWindows
 				ControlCheckWindow.isChecking = false;
 				this.indicatorSystem.Image = Resources.system_fail;
 				this.lineSystem.Image = Resources.line_unload;
-				this.systemLabel.Text = Localization.systemFail;
-				ControlDialog expr_1A6 = new ControlDialog();
-				expr_1A6.OnRetry = new ControlDialog.OnRetryDelegate(this.CheckControl);
-				expr_1A6.OnCloseClick = new BaseDialogForm.OnCloseClickDelegate(this.DialogClose);
+				this.systemLabel.Text = Resources.systemFail;
 				Util.showGrayBackground();
-				expr_1A6.ShowDialog(this);
+				new ControlDialog
+				{
+					OnRetry = new ControlDialog.OnRetryDelegate(this.CheckControl),
+					OnCloseClick = new BaseDialogForm.OnCloseClickDelegate(this.DialogClose)
+				}.Show(Util.sContext);
 				return;
 			}
 			if (error == -3000)
@@ -402,20 +524,21 @@ namespace TPCASTWindows
 				ControlCheckWindow.isChecking = false;
 				this.indicatorSystem.Image = Resources.system_fail;
 				this.lineSystem.Image = Resources.line_unload;
-				this.systemLabel.Text = Localization.systemFail;
-				ControlDialog expr_21A = new ControlDialog();
-				expr_21A.OnRetry = new ControlDialog.OnRetryDelegate(this.CheckControl);
-				expr_21A.OnCloseClick = new BaseDialogForm.OnCloseClickDelegate(this.DialogClose);
-				expr_21A.cableProblem = true;
+				this.systemLabel.Text = Resources.systemFail;
 				Util.showGrayBackground();
-				expr_21A.ShowDialog(this);
+				new ControlDialog
+				{
+					OnRetry = new ControlDialog.OnRetryDelegate(this.CheckControl),
+					OnCloseClick = new BaseDialogForm.OnCloseClickDelegate(this.DialogClose),
+					cableProblem = true
+				}.Show(Util.sContext);
 				return;
 			}
 			if (error == 0)
 			{
 				this.indicatorSystem.Image = Resources.system_success;
 				this.lineSystem.Image = Resources.line_loaded;
-				this.systemLabel.Text = Localization.systemSuccess;
+				this.systemLabel.Text = Resources.systemSuccess;
 				this.WirelessThread = new Thread(new ThreadStart(this.WirelessThreadStart));
 				this.WirelessThread.Start();
 			}
@@ -449,14 +572,14 @@ namespace TPCASTWindows
 		{
 			ControlCheckWindow.isChecking = false;
 			ControlCheckWindow.isAllPass = true;
-			this.progressBox.Image = Resources.connect_success_progres;
+			this.progressBox.Image = Resources.connect_success_progress;
 			this.indicatorWireless.Image = Resources.vr_success;
 			this.routerLabel.Visible = false;
 			this.raspberryLabel.Visible = false;
 			this.systemLabel.Visible = false;
-			this.messageLabel.Text = Localization.messageSuccess;
+			this.messageLabel.Text = Resources.messageSuccess;
 			this.messageLabel.Visible = true;
-			Util.StartBackgroundCheckControlThread();
+			LoopCheckModel.StartBackgroundCheckControlThread();
 		}
 
 		private void ShowGuideImage()
@@ -491,12 +614,12 @@ namespace TPCASTWindows
 			this.lineRaspberry.Image = Resources.line_loaded;
 			this.indicatorSystem.Image = Resources.system_success;
 			this.lineSystem.Image = Resources.line_loaded;
-			this.progressBox.Image = Resources.connect_success_progres;
+			this.progressBox.Image = Resources.connect_success_progress;
 			this.indicatorWireless.Image = Resources.vr_success;
 			this.routerLabel.Visible = false;
 			this.raspberryLabel.Visible = false;
 			this.systemLabel.Visible = false;
-			this.messageLabel.Text = Localization.messageSuccess;
+			this.messageLabel.Text = Resources.messageSuccess;
 			this.messageLabel.Visible = true;
 		}
 

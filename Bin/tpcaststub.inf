@@ -16,7 +16,7 @@ Signature="$WINDOWS NT$"
 Class=TpcastStub
 ClassGuid={56381A73-FFA0-4CBD-A746-3990B9BBFF7C}
 Provider=%TPCAST%
-DriverVer=04/13/2017,14.37.2.23
+DriverVer=04/21/2017,17.8.52.534
 CatalogFile=tpcaststub.cat
 
 [DestinationDirs]

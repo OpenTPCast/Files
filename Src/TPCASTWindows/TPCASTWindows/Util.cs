@@ -1,6 +1,7 @@
 using InTheHand.Net.Bluetooth;
 using InTheHand.Net.Sockets;
 using Microsoft.Win32;
+using NLog;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -12,14 +13,21 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using System.Timers;
 using System.Windows.Forms;
+using TPCASTWindows.UI.Other;
 
 namespace TPCASTWindows
 {
 	internal class Util
 	{
+		public delegate void OnInitCheckRouterSSIDFinishDelegate(bool modified);
+
+		public delegate void OnInitCheckRouterFailDelegate();
+
 		public delegate void OnCheckControlFinishDelegate(bool isLoaded);
 
 		public delegate void BeginCheckControlDelegate();
+
+		public delegate void OnCheckRouterSSIDFinishDelegate(bool modified);
 
 		public delegate void OnCheckRouterConnectedDelegate();
 
@@ -29,9 +37,9 @@ namespace TPCASTWindows
 
 		public delegate void OnControlInterruptDelegate(int status);
 
-		public delegate void OnHostConnectedDelegate();
-
 		public delegate void OnRouterConnectedDelegate();
+
+		public delegate void OnHostConnectedDelegate();
 
 		public delegate void OnControlConnectedErrorDelegate(int error);
 
@@ -61,13 +69,23 @@ namespace TPCASTWindows
 
 		public delegate void OnCheckSteamFinishDelegate(bool isInstalled);
 
+		private static Logger log = LogManager.GetCurrentClassLogger();
+
 		public static Form sContext;
+
+		public static Util.OnInitCheckRouterSSIDFinishDelegate OnInitCheckRouterSSIDFinish;
+
+		public static Util.OnInitCheckRouterFailDelegate OnInitCheckRouterFail;
+
+		private static Thread initCheckRouterSSIDThread;
 
 		public static Util.OnCheckRouterFinishDelegate OnCheckRouterFinishListener;
 
 		public static Util.OnCheckControlFinishDelegate OnCheckControlFinishListener;
 
 		public static Util.BeginCheckControlDelegate BeginCheckControl;
+
+		public static Util.OnCheckRouterSSIDFinishDelegate OnCheckRouterSSIDFinish;
 
 		public static Util.OnCheckRouterConnectedDelegate OnCheckRouterConnected;
 
@@ -95,9 +113,9 @@ namespace TPCASTWindows
 
 		private static bool isLinked = true;
 
-		public static Util.OnHostConnectedDelegate OnHostConnected;
-
 		public static Util.OnRouterConnectedDelegate OnRouterConnected;
+
+		public static Util.OnHostConnectedDelegate OnHostConnected;
 
 		public static Util.OnControlConnectedErrorDelegate OnControlConnectedError;
 
@@ -149,9 +167,11 @@ namespace TPCASTWindows
 
 		public static Util.OnCheckSteamFinishDelegate OnCheckSteamFinish;
 
-		private static GrayForm grayForm = new GrayForm();
+		public static GrayForm grayForm = new GrayForm();
 
 		private static int showCount = 0;
+
+		private static GuideForm guideForm = new GuideForm();
 
 		public static void Init(Form context)
 		{
@@ -161,6 +181,7 @@ namespace TPCASTWindows
 		public static void UnInit()
 		{
 			Util.sContext = null;
+			Util.AbortInitCheckRouterSSIDThread();
 			Util.AbortRouterThread();
 			Util.AbortCheckBluetoothThread();
 			Util.AbortScanBluetoothThread();
@@ -170,37 +191,112 @@ namespace TPCASTWindows
 
 		public List<IPAddress> GetGatewayAddresses()
 		{
-			List<IPAddress> list = new List<IPAddress>();
-			NetworkInterface[] allNetworkInterfaces = NetworkInterface.GetAllNetworkInterfaces();
-			Console.WriteLine("适配器个数：" + allNetworkInterfaces.Length);
-			Console.WriteLine();
-			NetworkInterface[] array = allNetworkInterfaces;
+			List<IPAddress> addresses = new List<IPAddress>();
+			NetworkInterface[] adapters = NetworkInterface.GetAllNetworkInterfaces();
+			Util.log.Trace("适配器个数：" + adapters.Length);
+			NetworkInterface[] array = adapters;
 			for (int i = 0; i < array.Length; i++)
 			{
-				NetworkInterface networkInterface = array[i];
-				Console.WriteLine("描述：" + networkInterface.Description);
-				Console.WriteLine("标识符：" + networkInterface.Id);
-				Console.WriteLine("名称：" + networkInterface.Name);
-				Console.WriteLine("类型：" + networkInterface.NetworkInterfaceType);
-				Console.WriteLine("速度：" + (double)networkInterface.Speed * 0.001 * 0.001 + "M");
-				Console.WriteLine("操作状态：" + networkInterface.OperationalStatus);
-				Console.WriteLine("MAC 地址：" + networkInterface.GetPhysicalAddress());
-				IPInterfaceProperties iPProperties = networkInterface.GetIPProperties();
-				if (iPProperties.GatewayAddresses.Count > 0)
+				NetworkInterface adapter = array[i];
+				Util.log.Trace("描述：" + adapter.Description);
+				Util.log.Trace("标识符：" + adapter.Id);
+				Util.log.Trace("名称：" + adapter.Name);
+				Util.log.Trace("类型：" + adapter.NetworkInterfaceType);
+				Util.log.Trace("速度：" + (double)adapter.Speed * 0.001 * 0.001 + "M");
+				Util.log.Trace("操作状态：" + adapter.OperationalStatus);
+				Util.log.Trace("MAC 地址：" + adapter.GetPhysicalAddress());
+				IPInterfaceProperties ipProperties = adapter.GetIPProperties();
+				if (ipProperties.GatewayAddresses.Count > 0)
 				{
-					Console.WriteLine("默认网关：" + iPProperties.GatewayAddresses[0].Address);
-					list.Add(iPProperties.GatewayAddresses[0].Address);
+					Util.log.Trace("默认网关：" + ipProperties.GatewayAddresses[0].Address);
+					addresses.Add(ipProperties.GatewayAddresses[0].Address);
 				}
 			}
-			return list;
+			return addresses;
 		}
 
 		public void CheckNetwork()
 		{
-			foreach (IPAddress current in this.GetGatewayAddresses())
+			foreach (IPAddress address in this.GetGatewayAddresses())
 			{
-				Console.WriteLine("测试网关：" + current);
+				Util.log.Trace("测试网关：" + address);
 				new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+			}
+		}
+
+		private static void initCheckRouterSSIDFinish(bool modified)
+		{
+			if (Util.sContext != null && Util.OnInitCheckRouterSSIDFinish != null)
+			{
+				if (Util.sContext.InvokeRequired)
+				{
+					Util.sContext.Invoke(Util.OnInitCheckRouterSSIDFinish, new object[]
+					{
+						modified
+					});
+					return;
+				}
+				Util.OnInitCheckRouterSSIDFinish(modified);
+			}
+		}
+
+		private static void initCheckRouterFail()
+		{
+			if (Util.sContext != null && Util.OnInitCheckRouterFail != null)
+			{
+				if (Util.sContext.InvokeRequired)
+				{
+					Util.sContext.Invoke(Util.OnInitCheckRouterFail);
+					return;
+				}
+				Util.OnInitCheckRouterFail();
+			}
+		}
+
+		public static void InitCheckRouterSSID()
+		{
+			Util.initCheckRouterSSIDThread = new Thread(new ThreadStart(Util.initCheckRouterSSIDThreadStart));
+			Util.initCheckRouterSSIDThread.Start();
+		}
+
+		private static void AbortInitCheckRouterSSIDThread()
+		{
+			if (Util.initCheckRouterSSIDThread != null)
+			{
+				Util.initCheckRouterSSIDThread.Abort();
+			}
+		}
+
+		private static void initCheckRouterSSIDThreadStart()
+		{
+			string SSID = ChannelUtil.getWifiSSID();
+			Util.log.Trace("ssid = " + SSID);
+			if (string.IsNullOrEmpty(SSID))
+			{
+				Util.initCheckRouterFail();
+				return;
+			}
+			if ("TPCast_AP".Equals(SSID))
+			{
+				Util.initCheckRouterSSIDFinish(false);
+				return;
+			}
+			Util.initCheckRouterSSIDFinish(true);
+		}
+
+		private static void CheckRouterSSIDFinish(bool modified)
+		{
+			if (Util.sContext != null && Util.OnCheckRouterSSIDFinish != null)
+			{
+				if (Util.sContext.InvokeRequired)
+				{
+					Util.sContext.Invoke(Util.OnCheckRouterSSIDFinish, new object[]
+					{
+						modified
+					});
+					return;
+				}
+				Util.OnCheckRouterSSIDFinish(modified);
 			}
 		}
 
@@ -222,9 +318,9 @@ namespace TPCASTWindows
 
 		private static void CheckRouter()
 		{
-			bool flag = false;
+			bool isCheckRouterConnected = false;
 			Util.abortCheckRouter = false;
-			while (!flag)
+			while (!isCheckRouterConnected)
 			{
 				if (Util.abortCheckRouter)
 				{
@@ -232,14 +328,30 @@ namespace TPCASTWindows
 					Util.CheckControlError(-1001);
 					return;
 				}
-				if (ChannelUtil.getWirelessChannel() != null)
+				if (ChannelUtil.pingRouterConnect())
 				{
 					Util.CheckRouterConnected();
-					Util.CheckHostThreadStart();
+					Util.checkRouterSSIDStart();
 					return;
 				}
 				Thread.Sleep(5000);
 			}
+		}
+
+		private static void checkRouterSSIDStart()
+		{
+			string SSID = ChannelUtil.getWifiSSID();
+			if (string.IsNullOrEmpty(SSID))
+			{
+				Util.CheckHostThreadStart();
+				return;
+			}
+			if ("TPCast_AP".Equals(SSID))
+			{
+				Util.CheckRouterSSIDFinish(false);
+				return;
+			}
+			Util.CheckHostThreadStart();
 		}
 
 		private static void StartCheckRouterTimer()
@@ -273,9 +385,9 @@ namespace TPCASTWindows
 
 		private static void CheckHost()
 		{
-			bool flag = false;
+			bool isHostConnected = false;
 			Util.abortCheckHost = false;
-			while (!flag)
+			while (!isHostConnected)
 			{
 				if (Util.abortCheckHost)
 				{
@@ -283,13 +395,13 @@ namespace TPCASTWindows
 					Util.CheckControlError(-1002);
 					return;
 				}
-				int num = UsbIPUtil.isHostConnected();
-				if (num == -1001)
+				int status = UsbIPUtil.isHostConnected();
+				if (status == -1001)
 				{
-					Util.CheckControlError(num);
+					Util.CheckControlError(status);
 					return;
 				}
-				if (num != -1002 && num == 0)
+				if (status != -1002 && status == 0)
 				{
 					Util.CheckHostConnected();
 					Util.ConnectControl();
@@ -329,15 +441,15 @@ namespace TPCASTWindows
 				Util.CheckControlError(-3000);
 				return;
 			}
-			int num = UsbIPUtil.ForceConnectControl();
-			if (num == 0)
+			int status = UsbIPUtil.ForceConnectControl();
+			if (status == 0)
 			{
 				Util.CheckControlError(0);
 				return;
 			}
-			if (num != -2000)
+			if (status != -2000)
 			{
-				if (num == -1000)
+				if (status == -1000)
 				{
 					Util.CheckControlError(UsbIPUtil.isUSBConnected());
 				}
@@ -395,7 +507,7 @@ namespace TPCASTWindows
 
 		public static void AbortRouterThread()
 		{
-			Console.WriteLine("AbortRouterThread");
+			Util.log.Trace("AbortRouterThread");
 			if (Util.checkRouterThread != null)
 			{
 				Util.checkRouterThread.Abort();
@@ -411,53 +523,53 @@ namespace TPCASTWindows
 
 		private static void StartBackgroundCheckControlThreadStart()
 		{
-			int num = 0;
+			int status = 0;
 			while (Util.isLinked)
 			{
-				num = UsbIPUtil.isUsbLinked();
-				if (num == 0)
+				status = UsbIPUtil.isUsbLinked();
+				if (status == 0)
 				{
 					Util.isLinked = true;
 				}
-				else if (num == -1000 || num == -2000)
+				else if (status == -1000 || status == -2000)
 				{
 					Util.isLinked = false;
 					break;
 				}
 				Thread.Sleep(5000);
 			}
-			if (num == -1000)
+			if (status == -1000)
 			{
-				if (ChannelUtil.getWirelessChannel() != null)
+				if (ChannelUtil.pingRouterConnect())
 				{
 					if (UsbIPUtil.isHostLinked())
 					{
 						if (UsbIPUtil.isCableLinked())
 						{
-							num = -1000;
+							status = -1000;
 						}
 						else
 						{
-							num = -3000;
+							status = -3000;
 						}
 					}
 					else
 					{
-						num = -1002;
+						status = -1002;
 					}
 				}
 				else
 				{
-					num = -1001;
+					status = -1001;
 				}
 			}
-			else if (num == -2000)
+			else if (status == -2000)
 			{
 				UsbIPUtil.RebootService();
-				num = -1000;
+				status = -1000;
 			}
 			Util.ConnectAnimateionPause();
-			Util.ControlInterrupt(num);
+			Util.ControlInterrupt(status);
 		}
 
 		private static void ControlInterrupt(int status)
@@ -478,7 +590,7 @@ namespace TPCASTWindows
 
 		public static void AbortBackgroundCheckControlThread()
 		{
-			Console.WriteLine("AboutBackgroundCheckControlThread");
+			Util.log.Trace("AboutBackgroundCheckControlThread");
 			if (Util.backgroundCheckControlThread != null)
 			{
 				Util.backgroundCheckControlThread.Abort();
@@ -499,9 +611,9 @@ namespace TPCASTWindows
 
 		private static void CheckControlReload()
 		{
-			bool flag = false;
+			bool isRouterConnected = false;
 			Util.abortRouter = false;
-			while (!flag)
+			while (!isRouterConnected)
 			{
 				if (Util.abortRouter)
 				{
@@ -509,7 +621,7 @@ namespace TPCASTWindows
 					Util.ControlConnectedError(-1001);
 					return;
 				}
-				if (ChannelUtil.getWirelessChannel() != null)
+				if (ChannelUtil.pingRouterConnect())
 				{
 					Util.RouterConnected();
 					Util.HostThreadStart();
@@ -569,9 +681,9 @@ namespace TPCASTWindows
 
 		private static void Host()
 		{
-			bool flag = false;
+			bool isHostConnected = false;
 			Util.abortHost = false;
-			while (!flag)
+			while (!isHostConnected)
 			{
 				if (Util.abortHost)
 				{
@@ -579,13 +691,13 @@ namespace TPCASTWindows
 					Util.ControlConnectedError(-1002);
 					return;
 				}
-				int num = UsbIPUtil.isHostConnected();
-				if (num == -1001)
+				int status = UsbIPUtil.isHostConnected();
+				if (status == -1001)
 				{
-					Util.ControlConnectedError(num);
+					Util.ControlConnectedError(status);
 					return;
 				}
-				if (num != -1002 && num == 0)
+				if (status != -1002 && status == 0)
 				{
 					Util.HostConnected();
 					Util.ReConnectControl();
@@ -639,15 +751,15 @@ namespace TPCASTWindows
 				Util.ControlConnectedError(-3000);
 				return;
 			}
-			int num = UsbIPUtil.ConnectControl();
-			if (num == 0)
+			int status = UsbIPUtil.ConnectControl();
+			if (status == 0)
 			{
 				Util.ControlConnectedError(0);
 				return;
 			}
-			if (num != -2000)
+			if (status != -2000)
 			{
-				if (num == -1000)
+				if (status == -1000)
 				{
 					Util.ControlConnectedError(UsbIPUtil.isUSBConnected());
 				}
@@ -679,7 +791,7 @@ namespace TPCASTWindows
 
 		public static void AbortCheckControlReloadThread()
 		{
-			Console.WriteLine("AboutCheckControlReloadThread");
+			Util.log.Trace("AboutCheckControlReloadThread");
 			if (Util.checkControlReloadThread != null)
 			{
 				Util.checkControlReloadThread.Abort();
@@ -723,16 +835,24 @@ namespace TPCASTWindows
 
 		private static void getCurrentChannel()
 		{
+			Util.log.Trace("getCurrentChannel");
+			if (!ChannelUtil.pingRouterConnect())
+			{
+				Util.log.Trace("ping 144.1 fail ");
+				Util.StopSwitchChannelTimer();
+				Util.CheckRouterChannelFinish(false);
+				return;
+			}
 			Util.currentChannel = ChannelUtil.getWirelessChannel();
-			Console.WriteLine("current Channel = " + Util.currentChannel);
+			Util.log.Trace("current Channel = " + Util.currentChannel);
 			if (Util.currentChannel != null)
 			{
 				ChannelUtil.switchWirelessChannel();
-				Console.WriteLine("switchWirelessChannel");
+				Util.log.Trace("switchWirelessChannel");
 				Util.checkIsChannelSwitched();
 				return;
 			}
-			Console.WriteLine("else");
+			Util.log.Trace("other router or bad router");
 			Util.StopSwitchChannelTimer();
 			Util.CheckRouterChannelFinish(false);
 		}
@@ -755,18 +875,19 @@ namespace TPCASTWindows
 
 		private static void checkIsChannelSwitched()
 		{
-			bool flag = false;
+			bool isSwitched = false;
 			Util.abortSwitchChannel = false;
-			while (!flag)
+			while (!isSwitched)
 			{
 				if (Util.abortSwitchChannel)
 				{
 					return;
 				}
 				Util.switchedChannel = ChannelUtil.getWirelessChannel();
+				Util.log.Trace("switched channel = " + Util.switchedChannel);
 				if (Util.switchedChannel != null && Util.switchedChannel != Util.currentChannel)
 				{
-					flag = true;
+					isSwitched = true;
 					Util.StopSwitchChannelTimer();
 					Util.ChannelSwitchedFinish();
 				}
@@ -824,16 +945,16 @@ namespace TPCASTWindows
 
 		private static void checkBluetoothThreadStart()
 		{
-			Version arg_15_0 = Environment.OSVersion.Version;
-			Version value = new Version("6.2");
-			Console.WriteLine(arg_15_0);
-			if (arg_15_0.CompareTo(value) >= 0)
+			Version currentVersion = Environment.OSVersion.Version;
+			Version compareToVersion = new Version("6.2");
+			Util.log.Trace(currentVersion.ToString());
+			if (currentVersion.CompareTo(compareToVersion) >= 0)
 			{
-				Console.WriteLine("当前系统是WIN8及以上版本系统。");
+				Util.log.Trace("当前系统是WIN8及以上版本系统。");
 				Util.CheckBluetoothWin8();
 				return;
 			}
-			Console.WriteLine("当前系统不是WIN8及以上版本系统。");
+			Util.log.Trace("当前系统不是WIN8及以上版本系统。");
 			if (Util.isInstallCSR())
 			{
 				if (Util.sContext != null && Util.DeviceConnected != null)
@@ -884,18 +1005,18 @@ namespace TPCASTWindows
 				BluetoothDeviceInfo[] bluetoothDevices = Util.getBluetoothDevices();
 				for (int i = 0; i < bluetoothDevices.Length; i++)
 				{
-					BluetoothDeviceInfo bluetoothDeviceInfo = bluetoothDevices[i];
-					Console.WriteLine(string.Concat(new string[]
+					BluetoothDeviceInfo device = bluetoothDevices[i];
+					Util.log.Trace(string.Concat(new string[]
 					{
-						bluetoothDeviceInfo.DeviceName,
+						device.DeviceName,
 						" 连接 ",
-						bluetoothDeviceInfo.Connected.ToString(),
+						device.Connected.ToString(),
 						" 配对 ",
-						bluetoothDeviceInfo.Authenticated.ToString()
+						device.Authenticated.ToString()
 					}));
-					if (bluetoothDeviceInfo.DeviceName.StartsWith("TPCAST"))
+					if (device.DeviceName.StartsWith("TPCAST"))
 					{
-						if (bluetoothDeviceInfo.Connected && bluetoothDeviceInfo.Authenticated)
+						if (device.Connected && device.Authenticated)
 						{
 							if (Util.DeviceConnected != null)
 							{
@@ -910,12 +1031,12 @@ namespace TPCASTWindows
 						}
 						else
 						{
-							if (!bluetoothDeviceInfo.Connected && bluetoothDeviceInfo.Authenticated)
+							if (!device.Connected && device.Authenticated)
 							{
-								new Thread(new ParameterizedThreadStart(Util.connectBluetoothStart)).Start(bluetoothDeviceInfo);
+								new Thread(new ParameterizedThreadStart(Util.connectBluetoothStart)).Start(device);
 								return;
 							}
-							new Thread(new ParameterizedThreadStart(Util.pairAndConnectBluetoothStart)).Start(bluetoothDeviceInfo);
+							new Thread(new ParameterizedThreadStart(Util.pairAndConnectBluetoothStart)).Start(device);
 						}
 						return;
 					}
@@ -938,7 +1059,7 @@ namespace TPCASTWindows
 			{
 				if (device is BluetoothDeviceInfo)
 				{
-					Console.WriteLine("开始连接：" + ((BluetoothDeviceInfo)device).DeviceName);
+					Util.log.Trace("开始连接：" + ((BluetoothDeviceInfo)device).DeviceName);
 					new BluetoothClient();
 					if (BluetoothSecurity.RemoveDevice(((BluetoothDeviceInfo)device).DeviceAddress))
 					{
@@ -948,7 +1069,7 @@ namespace TPCASTWindows
 			}
 			catch
 			{
-				Console.WriteLine("connect fail");
+				Util.log.Error("connect fail");
 			}
 		}
 
@@ -958,7 +1079,7 @@ namespace TPCASTWindows
 			{
 				if (device is BluetoothDeviceInfo)
 				{
-					Console.WriteLine("开始连接：" + ((BluetoothDeviceInfo)device).DeviceName);
+					Util.log.Trace("开始连接：" + ((BluetoothDeviceInfo)device).DeviceName);
 					if (BluetoothSecurity.PairRequest(((BluetoothDeviceInfo)device).DeviceAddress, "0000"))
 					{
 						if (Util.DeviceConnected != null)
@@ -988,7 +1109,7 @@ namespace TPCASTWindows
 			}
 			catch
 			{
-				Console.WriteLine("pair fail");
+				Util.log.Error("pair fail");
 			}
 		}
 
@@ -1000,27 +1121,27 @@ namespace TPCASTWindows
 		public static BluetoothDeviceInfo[] getBluetoothDevices()
 		{
 			BluetoothRadio arg_0C_0 = BluetoothRadio.PrimaryRadio;
-			BluetoothClient bluetoothClient = new BluetoothClient();
+			BluetoothClient Blueclient = new BluetoothClient();
 			arg_0C_0.Mode = RadioMode.PowerOff;
-			return bluetoothClient.DiscoverDevices();
+			return Blueclient.DiscoverDevices();
 		}
 
 		public BluetoothDeviceInfo[] getAuthenticatedBluetoothDevices()
 		{
 			BluetoothDeviceInfo[] arg_0B_0 = Util.getBluetoothDevices();
-			List<BluetoothDeviceInfo> list = new List<BluetoothDeviceInfo>();
+			List<BluetoothDeviceInfo> authenticated = new List<BluetoothDeviceInfo>();
 			BluetoothDeviceInfo[] array = arg_0B_0;
 			for (int i = 0; i < array.Length; i++)
 			{
-				BluetoothDeviceInfo bluetoothDeviceInfo = array[i];
-				if (bluetoothDeviceInfo.Authenticated)
+				BluetoothDeviceInfo device = array[i];
+				if (device.Authenticated)
 				{
-					list.Add(bluetoothDeviceInfo);
+					authenticated.Add(device);
 				}
 			}
-			if (list.Count > 0)
+			if (authenticated.Count > 0)
 			{
-				return list.ToArray();
+				return authenticated.ToArray();
 			}
 			return null;
 		}
@@ -1028,26 +1149,26 @@ namespace TPCASTWindows
 		public BluetoothDeviceInfo[] getConnectedBluetoothDevices()
 		{
 			BluetoothDeviceInfo[] arg_0B_0 = Util.getBluetoothDevices();
-			List<BluetoothDeviceInfo> list = new List<BluetoothDeviceInfo>();
+			List<BluetoothDeviceInfo> connected = new List<BluetoothDeviceInfo>();
 			BluetoothDeviceInfo[] array = arg_0B_0;
 			for (int i = 0; i < array.Length; i++)
 			{
-				BluetoothDeviceInfo bluetoothDeviceInfo = array[i];
-				if (bluetoothDeviceInfo.Authenticated)
+				BluetoothDeviceInfo device = array[i];
+				if (device.Authenticated)
 				{
-					list.Add(bluetoothDeviceInfo);
+					connected.Add(device);
 				}
 			}
-			if (list.Count > 0)
+			if (connected.Count > 0)
 			{
-				return list.ToArray();
+				return connected.ToArray();
 			}
 			return null;
 		}
 
 		public static void AbortCheckBluetoothThread()
 		{
-			Console.WriteLine("AbortCheckBluetoothThread");
+			Util.log.Trace("AbortCheckBluetoothThread");
 			if (Util.checkBluetoothThread != null)
 			{
 				Util.checkBluetoothThread.Abort();
@@ -1056,7 +1177,7 @@ namespace TPCASTWindows
 
 		public static void AbortScanBluetoothThread()
 		{
-			Console.WriteLine("AbortScanBluetoothThread");
+			Util.log.Trace("AbortScanBluetoothThread");
 			if (Util.scanBluetoothThread != null)
 			{
 				Util.scanBluetoothThread.Abort();
@@ -1093,20 +1214,20 @@ namespace TPCASTWindows
 
 		public static string searchSteamPath()
 		{
-			using (RegistryKey registryKey = Registry.LocalMachine.OpenSubKey("SOFTWARE\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall", false))
+			using (RegistryKey key = Registry.LocalMachine.OpenSubKey("SOFTWARE\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall", false))
 			{
-				if (registryKey != null)
+				if (key != null)
 				{
-					using (RegistryKey registryKey2 = registryKey.OpenSubKey("Steam", false))
+					using (RegistryKey key2 = key.OpenSubKey("Steam", false))
 					{
-						if (registryKey2 != null)
+						if (key2 != null)
 						{
-							string text = registryKey2.GetValue("UninstallString", "").ToString();
-							string text2 = text.Substring(0, text.LastIndexOf("\\")) + "\\Steam.exe";
+							string uninstallString = key2.GetValue("UninstallString", "").ToString();
+							string installLocation = uninstallString.Substring(0, uninstallString.LastIndexOf("\\")) + "\\Steam.exe";
 							string result;
-							if (File.Exists(text2))
+							if (File.Exists(installLocation))
 							{
-								result = text2;
+								result = installLocation;
 								return result;
 							}
 							result = null;
@@ -1120,25 +1241,25 @@ namespace TPCASTWindows
 
 		public static bool isSteamVRRunning()
 		{
-			IntPtr intPtr = Util.CreateToolhelp32Snapshot(2u, 0u);
+			IntPtr handle = Util.CreateToolhelp32Snapshot(2u, 0u);
 			List<ProcessEntry32> list = new List<ProcessEntry32>();
-			if ((int)intPtr > 0)
+			if ((int)handle > 0)
 			{
-				ProcessEntry32 processEntry = default(ProcessEntry32);
-				processEntry.dwSize = (uint)Marshal.SizeOf(processEntry);
-				for (int num = Util.Process32First(intPtr, ref processEntry); num == 1; num = Util.Process32Next(intPtr, ref processEntry))
+				ProcessEntry32 pe32 = default(ProcessEntry32);
+				pe32.dwSize = (uint)Marshal.SizeOf(pe32);
+				for (int bMore = Util.Process32First(handle, ref pe32); bMore == 1; bMore = Util.Process32Next(handle, ref pe32))
 				{
-					IntPtr intPtr2 = Marshal.AllocHGlobal((int)processEntry.dwSize);
-					Marshal.StructureToPtr(processEntry, intPtr2, true);
-					ProcessEntry32 item = (ProcessEntry32)Marshal.PtrToStructure(intPtr2, typeof(ProcessEntry32));
-					Marshal.FreeHGlobal(intPtr2);
-					list.Add(item);
+					IntPtr temp = Marshal.AllocHGlobal((int)pe32.dwSize);
+					Marshal.StructureToPtr(pe32, temp, true);
+					ProcessEntry32 pe33 = (ProcessEntry32)Marshal.PtrToStructure(temp, typeof(ProcessEntry32));
+					Marshal.FreeHGlobal(temp);
+					list.Add(pe33);
 				}
-				Util.CloseHandle(intPtr);
-				foreach (ProcessEntry32 current in list)
+				Util.CloseHandle(handle);
+				foreach (ProcessEntry32 p in list)
 				{
-					Console.WriteLine(current.szExeFile);
-					if ("vrmonitor.exe".Equals(current.szExeFile))
+					Util.log.Trace(p.szExeFile);
+					if ("vrmonitor.exe".Equals(p.szExeFile))
 					{
 						return true;
 					}
@@ -1188,22 +1309,22 @@ namespace TPCASTWindows
 
 		public static bool isInstallCSR()
 		{
-			using (RegistryKey registryKey = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64))
+			using (RegistryKey localMachine64 = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64))
 			{
-				using (RegistryKey registryKey2 = registryKey.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall"))
+				using (RegistryKey key = localMachine64.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall"))
 				{
-					if (registryKey2 != null)
+					if (key != null)
 					{
-						string[] subKeyNames = registryKey2.GetSubKeyNames();
+						string[] subKeyNames = key.GetSubKeyNames();
 						for (int i = 0; i < subKeyNames.Length; i++)
 						{
 							string name = subKeyNames[i];
-							using (RegistryKey registryKey3 = registryKey2.OpenSubKey(name, false))
+							using (RegistryKey key2 = key.OpenSubKey(name, false))
 							{
-								if (registryKey3 != null)
+								if (key2 != null)
 								{
-									string value = registryKey3.GetValue("DisplayName", "").ToString();
-									if ("CSR Harmony Wireless Software Stack".Equals(value))
+									string displayName = key2.GetValue("DisplayName", "").ToString();
+									if ("CSR Harmony Wireless Software Stack".Equals(displayName))
 									{
 										return true;
 									}
@@ -1218,16 +1339,16 @@ namespace TPCASTWindows
 
 		public static void LaunchVive()
 		{
-			using (RegistryKey registryKey = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64))
+			using (RegistryKey localMachine64 = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64))
 			{
-				using (RegistryKey registryKey2 = registryKey.OpenSubKey("SOFTWARE\\Wow6432Node\\HtcVive\\PCClient"))
+				using (RegistryKey key = localMachine64.OpenSubKey("SOFTWARE\\Wow6432Node\\HtcVive\\PCClient"))
 				{
-					if (registryKey2 != null)
+					if (key != null)
 					{
-						string text = registryKey2.GetValue("LaunchPath", "").ToString();
-						if (!string.IsNullOrEmpty(text))
+						string launchPath = key.GetValue("LaunchPath", "").ToString();
+						if (!string.IsNullOrEmpty(launchPath))
 						{
-							Process.Start(text);
+							Process.Start(launchPath);
 						}
 					}
 				}
@@ -1236,14 +1357,14 @@ namespace TPCASTWindows
 
 		public static bool isViveInstalled()
 		{
-			using (RegistryKey registryKey = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64))
+			using (RegistryKey localMachine64 = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64))
 			{
-				using (RegistryKey registryKey2 = registryKey.OpenSubKey("SOFTWARE\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\VIVE Software"))
+				using (RegistryKey key = localMachine64.OpenSubKey("SOFTWARE\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\VIVE Software"))
 				{
-					if (registryKey2 != null)
+					if (key != null)
 					{
-						string value = registryKey2.GetValue("DisplayName", "").ToString();
-						if ("VIVE Software".Equals(value))
+						string displayName = key.GetValue("DisplayName", "").ToString();
+						if ("VIVE Software".Equals(displayName))
 						{
 							return true;
 						}
@@ -1255,11 +1376,11 @@ namespace TPCASTWindows
 
 		public static bool isViveSteamVRInstalled()
 		{
-			using (RegistryKey registryKey = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64))
+			using (RegistryKey localMachine64 = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64))
 			{
-				using (RegistryKey registryKey2 = registryKey.OpenSubKey("SOFTWARE\\Wow6432Node\\HtcVive\\SteamVR"))
+				using (RegistryKey key = localMachine64.OpenSubKey("SOFTWARE\\Wow6432Node\\HtcVive\\SteamVR"))
 				{
-					if (registryKey2 != null && !string.IsNullOrEmpty(registryKey2.GetValue("LaunchPath", "").ToString()))
+					if (key != null && !string.IsNullOrEmpty(key.GetValue("LaunchPath", "").ToString()))
 					{
 						return true;
 					}
@@ -1270,16 +1391,16 @@ namespace TPCASTWindows
 
 		public static void LaunchViveSteamVR()
 		{
-			using (RegistryKey registryKey = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64))
+			using (RegistryKey localMachine64 = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64))
 			{
-				using (RegistryKey registryKey2 = registryKey.OpenSubKey("SOFTWARE\\Wow6432Node\\HtcVive\\SteamVR"))
+				using (RegistryKey key = localMachine64.OpenSubKey("SOFTWARE\\Wow6432Node\\HtcVive\\SteamVR"))
 				{
-					if (registryKey2 != null)
+					if (key != null)
 					{
-						string text = registryKey2.GetValue("LaunchPath", "").ToString();
-						if (!string.IsNullOrEmpty(text))
+						string launchPath = key.GetValue("LaunchPath", "").ToString();
+						if (!string.IsNullOrEmpty(launchPath))
 						{
-							Process.Start(text);
+							Process.Start(launchPath);
 						}
 					}
 				}
@@ -1290,6 +1411,7 @@ namespace TPCASTWindows
 		{
 			if (Util.showCount == 0 && Util.sContext != null && !Util.sContext.IsDisposed)
 			{
+				Util.log.Trace("form state = " + Util.sContext.WindowState);
 				Util.sContext.Show();
 				Util.sContext.ShowInTaskbar = true;
 				Util.sContext.WindowState = FormWindowState.Normal;
@@ -1299,6 +1421,7 @@ namespace TPCASTWindows
 				Util.grayForm.Show(Util.sContext);
 			}
 			Util.showCount++;
+			Util.closeContextMenuStrip();
 		}
 
 		public static void HideGrayBackground()
@@ -1308,6 +1431,26 @@ namespace TPCASTWindows
 			{
 				Util.grayForm.Hide();
 			}
+		}
+
+		public static void showGuideForm()
+		{
+			if (Util.sContext != null && !Util.sContext.IsDisposed)
+			{
+				Util.log.Trace("form state = " + Util.sContext.WindowState);
+				Util.sContext.Show();
+				Util.sContext.ShowInTaskbar = true;
+				Util.sContext.WindowState = FormWindowState.Normal;
+				Util.guideForm.Location = Util.sContext.Location;
+				Util.guideForm.ShowInTaskbar = false;
+				Util.guideForm.StartPosition = FormStartPosition.Manual;
+				Util.guideForm.Show(Util.sContext);
+			}
+		}
+
+		public static void hideGuideForm()
+		{
+			Util.guideForm.Close();
 		}
 
 		public static void miniGrayBackground()
@@ -1320,35 +1463,43 @@ namespace TPCASTWindows
 			Util.grayForm.WindowState = FormWindowState.Normal;
 		}
 
+		private static void closeContextMenuStrip()
+		{
+			if (Util.sContext != null && Util.sContext is BaseForm)
+			{
+				((BaseForm)Util.sContext).closeContextMenuStrip();
+			}
+		}
+
 		public static void suicide()
 		{
-			IntPtr intPtr = Util.CreateToolhelp32Snapshot(2u, 0u);
+			IntPtr handle = Util.CreateToolhelp32Snapshot(2u, 0u);
 			List<ProcessEntry32> list = new List<ProcessEntry32>();
-			if ((int)intPtr > 0)
+			if ((int)handle > 0)
 			{
-				ProcessEntry32 processEntry = default(ProcessEntry32);
-				processEntry.dwSize = (uint)Marshal.SizeOf(processEntry);
-				for (int num = Util.Process32First(intPtr, ref processEntry); num == 1; num = Util.Process32Next(intPtr, ref processEntry))
+				ProcessEntry32 pe32 = default(ProcessEntry32);
+				pe32.dwSize = (uint)Marshal.SizeOf(pe32);
+				for (int bMore = Util.Process32First(handle, ref pe32); bMore == 1; bMore = Util.Process32Next(handle, ref pe32))
 				{
-					IntPtr intPtr2 = Marshal.AllocHGlobal((int)processEntry.dwSize);
-					Marshal.StructureToPtr(processEntry, intPtr2, true);
-					ProcessEntry32 item = (ProcessEntry32)Marshal.PtrToStructure(intPtr2, typeof(ProcessEntry32));
-					Marshal.FreeHGlobal(intPtr2);
-					list.Add(item);
+					IntPtr temp = Marshal.AllocHGlobal((int)pe32.dwSize);
+					Marshal.StructureToPtr(pe32, temp, true);
+					ProcessEntry32 pe33 = (ProcessEntry32)Marshal.PtrToStructure(temp, typeof(ProcessEntry32));
+					Marshal.FreeHGlobal(temp);
+					list.Add(pe33);
 				}
-				Util.CloseHandle(intPtr);
-				foreach (ProcessEntry32 current in list)
+				Util.CloseHandle(handle);
+				foreach (ProcessEntry32 p in list)
 				{
-					Console.WriteLine(current.szExeFile);
-					if ("TPCASTWindows.exe".Equals(current.szExeFile))
+					Util.log.Trace(p.szExeFile);
+					if ("TPCASTWindows.exe".Equals(p.szExeFile))
 					{
 						try
 						{
-							Process.GetProcessById((int)current.th32ProcessID).Kill();
+							Process.GetProcessById((int)p.th32ProcessID).Kill();
 						}
-						catch (Exception arg_DA_0)
+						catch (Exception e)
 						{
-							Console.WriteLine(arg_DA_0.Message);
+							Util.log.Error("suicide" + e.Message + "\r\n" + e.StackTrace);
 						}
 					}
 				}

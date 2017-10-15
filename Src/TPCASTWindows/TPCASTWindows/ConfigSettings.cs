@@ -18,18 +18,18 @@ namespace TPCASTWindows
 
 		public static string readSetting(string key)
 		{
-			XmlNode xmlNode = ConfigSettings.loadConfigDocument().SelectSingleNode("//appSettings");
-			if (xmlNode == null)
+			XmlNode node = ConfigSettings.loadConfigDocument().SelectSingleNode("//appSettings");
+			if (node == null)
 			{
 				throw new InvalidOperationException("appSettings section not found in config file.");
 			}
 			string result;
 			try
 			{
-				XmlElement xmlElement = (XmlElement)xmlNode.SelectSingleNode(string.Format("//add[@key='{0}']", key));
-				if (xmlElement != null)
+				XmlElement elem = (XmlElement)node.SelectSingleNode(string.Format("//add[@key='{0}']", key));
+				if (elem != null)
 				{
-					result = xmlElement.GetAttribute("value");
+					result = elem.GetAttribute("value");
 				}
 				else
 				{
@@ -45,27 +45,27 @@ namespace TPCASTWindows
 
 		public static void writeSetting(string key, string value)
 		{
-			XmlDocument xmlDocument = ConfigSettings.loadConfigDocument();
-			XmlNode xmlNode = xmlDocument.SelectSingleNode("//appSettings");
-			if (xmlNode == null)
+			XmlDocument doc = ConfigSettings.loadConfigDocument();
+			XmlNode node = doc.SelectSingleNode("//appSettings");
+			if (node == null)
 			{
 				throw new InvalidOperationException("appSettings section not found in config file.");
 			}
 			try
 			{
-				XmlElement xmlElement = (XmlElement)xmlNode.SelectSingleNode(string.Format("//add[@key='{0}']", key));
-				if (xmlElement != null)
+				XmlElement elem = (XmlElement)node.SelectSingleNode(string.Format("//add[@key='{0}']", key));
+				if (elem != null)
 				{
-					xmlElement.SetAttribute("value", value);
+					elem.SetAttribute("value", value);
 				}
 				else
 				{
-					xmlElement = xmlDocument.CreateElement("add");
-					xmlElement.SetAttribute("key", key);
-					xmlElement.SetAttribute("value", value);
-					xmlNode.AppendChild(xmlElement);
+					elem = doc.CreateElement("add");
+					elem.SetAttribute("key", key);
+					elem.SetAttribute("value", value);
+					node.AppendChild(elem);
 				}
-				xmlDocument.Save(ConfigSettings.getConfigFilePath());
+				doc.Save(ConfigSettings.getConfigFilePath());
 			}
 			catch
 			{
@@ -75,21 +75,21 @@ namespace TPCASTWindows
 
 		public static void RemoveSetting(string key)
 		{
-			XmlDocument xmlDocument = ConfigSettings.loadConfigDocument();
-			XmlNode xmlNode = xmlDocument.SelectSingleNode("//appSettings");
+			XmlDocument doc = ConfigSettings.loadConfigDocument();
+			XmlNode node = doc.SelectSingleNode("//appSettings");
 			try
 			{
-				if (xmlNode == null)
+				if (node == null)
 				{
 					throw new InvalidOperationException("appSettings section not found in config file.");
 				}
-				XmlNode expr_21 = xmlNode;
+				XmlNode expr_21 = node;
 				expr_21.RemoveChild(expr_21.SelectSingleNode(string.Format("//add[@key='{0}']", key)));
-				xmlDocument.Save(ConfigSettings.getConfigFilePath());
+				doc.Save(ConfigSettings.getConfigFilePath());
 			}
-			catch (NullReferenceException innerException)
+			catch (NullReferenceException e)
 			{
-				throw new Exception(string.Format("The key {0} does not exist.", key), innerException);
+				throw new Exception(string.Format("The key {0} does not exist.", key), e);
 			}
 		}
 
@@ -98,31 +98,31 @@ namespace TPCASTWindows
 			XmlDocument result;
 			try
 			{
-				XmlDocument xmlDocument = new XmlDocument();
-				string configFilePath = ConfigSettings.getConfigFilePath();
-				if (File.Exists(configFilePath))
+				XmlDocument doc = new XmlDocument();
+				string configFile = ConfigSettings.getConfigFilePath();
+				if (File.Exists(configFile))
 				{
-					xmlDocument.Load(ConfigSettings.getConfigFilePath());
+					doc.Load(ConfigSettings.getConfigFilePath());
 				}
 				else
 				{
-					XmlDeclaration newChild = xmlDocument.CreateXmlDeclaration("1.0", "utf-8", null);
-					xmlDocument.AppendChild(newChild);
-					XmlElement xmlElement = xmlDocument.CreateElement("configuration");
-					xmlDocument.AppendChild(xmlElement);
-					XmlElement xmlElement2 = xmlDocument.CreateElement("appSettings");
-					XmlElement xmlElement3 = xmlDocument.CreateElement("add");
-					xmlElement3.SetAttribute("key", "steam");
-					xmlElement3.SetAttribute("value", "");
-					xmlElement2.AppendChild(xmlElement3);
-					xmlElement.AppendChild(xmlElement2);
-					xmlDocument.Save(configFilePath);
+					XmlDeclaration dec = doc.CreateXmlDeclaration("1.0", "utf-8", null);
+					doc.AppendChild(dec);
+					XmlElement root = doc.CreateElement("configuration");
+					doc.AppendChild(root);
+					XmlElement settings = doc.CreateElement("appSettings");
+					XmlElement addNode = doc.CreateElement("add");
+					addNode.SetAttribute("key", "steam");
+					addNode.SetAttribute("value", "");
+					settings.AppendChild(addNode);
+					root.AppendChild(settings);
+					doc.Save(configFile);
 				}
-				result = xmlDocument;
+				result = doc;
 			}
-			catch (FileNotFoundException innerException)
+			catch (FileNotFoundException e)
 			{
-				throw new Exception("No configuration file found.", innerException);
+				throw new Exception("No configuration file found.", e);
 			}
 			return result;
 		}

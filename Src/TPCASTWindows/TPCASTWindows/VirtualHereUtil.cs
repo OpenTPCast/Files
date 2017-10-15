@@ -20,16 +20,16 @@ namespace TPCASTWindows
 		public static bool isControlLoaded()
 		{
 			VirtualHereUtil.openAutoFind();
-			string text = VirtualHereUtil.command("tpui64.exe -t list");
-			if (!string.IsNullOrEmpty(text))
+			string output = VirtualHereUtil.command("tpui64.exe -t list");
+			if (!string.IsNullOrEmpty(output))
 			{
-				if (text.Contains("ERROR"))
+				if (output.Contains("ERROR"))
 				{
 					VirtualHereUtil.reStartTpui();
 					Thread.Sleep(500);
 					return VirtualHereUtil.isControlLoaded();
 				}
-				if (text.Contains("tpcast.1121"))
+				if (output.Contains("tpcast.1121"))
 				{
 					return true;
 				}
@@ -96,25 +96,25 @@ namespace TPCASTWindows
 
 		public static string getOutputFile()
 		{
-			string text = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\TPCAST";
-			if (!Directory.Exists(text))
+			string outputDir = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\TPCAST";
+			if (!Directory.Exists(outputDir))
 			{
-				Directory.CreateDirectory(text);
+				Directory.CreateDirectory(outputDir);
 			}
-			string text2 = text + "\\out.txt";
-			if (!File.Exists(text2))
+			string outputFile = outputDir + "\\out.txt";
+			if (!File.Exists(outputFile))
 			{
-				File.Create(text2).Close();
+				File.Create(outputFile).Close();
 			}
-			return text2;
+			return outputFile;
 		}
 
 		public static string readTextFile(string path)
 		{
 			string result;
-			using (StreamReader streamReader = new StreamReader(path, Encoding.Default))
+			using (StreamReader sr = new StreamReader(path, Encoding.Default))
 			{
-				result = streamReader.ReadToEnd();
+				result = sr.ReadToEnd();
 			}
 			return result;
 		}

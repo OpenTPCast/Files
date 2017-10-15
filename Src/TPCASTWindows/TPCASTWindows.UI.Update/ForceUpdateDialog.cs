@@ -1,3 +1,4 @@
+using NLog;
 using System;
 using System.ComponentModel;
 using System.Drawing;
@@ -5,13 +6,15 @@ using System.IO;
 using System.Net;
 using System.Threading;
 using System.Windows.Forms;
-using TPCASTWindows.Resources;
+using TPCASTWindows.Properties;
 
 namespace TPCASTWindows.UI.Update
 {
-	public class ForceUpdateDialog : BaseDialogForm, DownloadCallbackInterface, SocketUpdateCallback, SocketExceptonCallback
+	public class ForceUpdateDialog : BaseDialogForm, DownloadCallbackInterface, SocketConnectCallback, SocketUpdateCallback, SocketExceptonCallback
 	{
 		public delegate void OnRetryDelegate();
+
+		private static Logger log = LogManager.GetCurrentClassLogger();
 
 		public string adapterUrl = "";
 
@@ -48,31 +51,38 @@ namespace TPCASTWindows.UI.Update
 			this.InitializeComponent();
 			this.closeButton.Visible = false;
 			this.socketModel = new SocketModel(this);
+			this.socketModel.addSocketConnectCallback(this);
 			this.socketModel.addSocketUpdateCallback(this);
 			this.socketModel.addSocketExceptionCallback(this);
 		}
 
 		private void ForceUpdateDialog_Load(object sender, EventArgs e)
 		{
-			if (string.IsNullOrEmpty(this.adapterUrl))
+			if (!string.IsNullOrEmpty(this.adapterUrl))
 			{
-				if (!string.IsNullOrEmpty(this.softwareUrl))
+				if (this.isAdapterDownloaded)
 				{
-					if (this.isSoftwareDownloaded)
-					{
-						this.showDoanloadSoftwareFinish();
-						return;
-					}
-					this.startDownloadSoftware();
+					this.showDownloadFirmwareFinish();
+					return;
 				}
+				this.startDownloadFirmware();
 				return;
 			}
-			if (this.isAdapterDownloaded)
+			else
 			{
-				this.showDownloadFirmwareFinish();
+				if (string.IsNullOrEmpty(this.softwareUrl))
+				{
+					this.ShowFirmwareFailControl();
+					return;
+				}
+				if (this.isSoftwareDownloaded)
+				{
+					this.showDoanloadSoftwareFinish();
+					return;
+				}
+				this.startDownloadSoftware();
 				return;
 			}
-			this.startDownloadFirmware();
 		}
 
 		private void startDownloadFirmware()
@@ -84,7 +94,7 @@ namespace TPCASTWindows.UI.Update
 		private void showDownloadFirmwareFinish()
 		{
 			this.ShowFirmwareDownloadControl();
-			this.firmwareControl.setMessage(Localization.firmwareDonloadFinish);
+			this.firmwareControl.setMessage(Resources.firmwareDonloadFinish);
 			this.firmwareControl.setProgress(100);
 			this.firmwareControl.setContinueButtonVisble(true);
 		}
@@ -126,9 +136,25 @@ namespace TPCASTWindows.UI.Update
 			expr_17.Flush();
 			expr_17.Close();
 			expr_11.Close();
-			this.softwareControl.setMessage(Localization.softwareDownloadFinish);
+			this.softwareControl.setMessage(Resources.softwareDownloadFinish);
 			this.softwareControl.setProgress(100);
 			this.softwareControl.setContinueButtonVisble(true);
+		}
+
+		public void OnConnected(bool success)
+		{
+			if (!success)
+			{
+				this.ShowFirmwareFailControl();
+			}
+		}
+
+		public void OnVersionReceive(string version)
+		{
+		}
+
+		public void OnMacReceive(string mac)
+		{
 		}
 
 		public void OnUpdateVersionReceive(bool success)
@@ -137,7 +163,7 @@ namespace TPCASTWindows.UI.Update
 			{
 				if (this.socketModel != null)
 				{
-					this.socketModel.transUpdateMd5(this.adapterMd5);
+					this.socketModel.TransUpdateMd5(this.adapterMd5);
 					return;
 				}
 			}
@@ -153,7 +179,7 @@ namespace TPCASTWindows.UI.Update
 			{
 				if (this.socketModel != null)
 				{
-					this.socketModel.prepareUpdate();
+					this.socketModel.PrepareUpdate();
 					return;
 				}
 			}
@@ -209,7 +235,7 @@ namespace TPCASTWindows.UI.Update
 
 		public void DownloadProgressChanged(object sender, DownloadProgressChangedEventArgs e)
 		{
-			Console.WriteLine("percent = " + e.ProgressPercentage);
+			ForceUpdateDialog.log.Trace("percent = " + e.ProgressPercentage);
 			if ("adapter".Equals(e.UserState))
 			{
 				if (this.firmwareControl != null && this.isAdapterDownloading)
@@ -226,21 +252,21 @@ namespace TPCASTWindows.UI.Update
 
 		public void DownloadFileCompleted(object sender, AsyncCompletedEventArgs e)
 		{
-			Console.WriteLine("sender = " + sender);
+			ForceUpdateDialog.log.Trace("sender = " + sender);
 			if ("adapter".Equals(e.UserState))
 			{
 				this.isAdapterDownloading = false;
 				if (File.Exists(Constants.updateAdapterFilePath))
 				{
-					string mD5HashFromFile = CryptoUtil.GetMD5HashFromFile(Constants.updateAdapterFilePath);
-					if (!this.adapterMd5.Equals(mD5HashFromFile))
+					string md5 = CryptoUtil.GetMD5HashFromFile(Constants.updateAdapterFilePath);
+					if (!this.adapterMd5.Equals(md5))
 					{
 						this.ShowFirmwareDownloadExceptionControl();
 						return;
 					}
 					if (this.firmwareControl != null)
 					{
-						this.firmwareControl.setMessage(Localization.firmwareDonloadFinish);
+						this.firmwareControl.setMessage(Resources.firmwareDonloadFinish);
 						this.firmwareControl.setContinueButtonVisble(true);
 						this.firmwareControl.OnContinueClick = new UpdateFirmwareDownloadControl.OnContinueClickDelegate(this.transUpdateFile);
 						return;
@@ -252,12 +278,12 @@ namespace TPCASTWindows.UI.Update
 				this.isSoftwareDownloading = false;
 				if (File.Exists(Constants.updateSoftwareFilePath))
 				{
-					string mD5HashFromFile2 = CryptoUtil.GetMD5HashFromFile(Constants.updateSoftwareFilePath);
-					if (this.softwareMd5.Equals(mD5HashFromFile2))
+					string md6 = CryptoUtil.GetMD5HashFromFile(Constants.updateSoftwareFilePath);
+					if (this.softwareMd5.Equals(md6))
 					{
 						if (this.softwareControl != null)
 						{
-							this.softwareControl.setMessage(Localization.softwareDownloadFinish);
+							this.softwareControl.setMessage(Resources.softwareDownloadFinish);
 							this.softwareControl.setContinueButtonVisble(true);
 							return;
 						}
@@ -285,10 +311,18 @@ namespace TPCASTWindows.UI.Update
 
 		private void transUpdateFile()
 		{
-			this.ShowFirmwareWaitingControl();
-			if (!string.IsNullOrEmpty(this.updateAdapterVersionString) && this.socketModel != null)
+			if (File.Exists(Constants.updateAdapterFilePath))
 			{
-				this.socketModel.transUpdateVersion(this.updateAdapterVersionString);
+				this.ShowFirmwareWaitingControl();
+				if (!string.IsNullOrEmpty(this.updateAdapterVersionString) && this.socketModel != null)
+				{
+					this.socketModel.TransUpdateVersion(this.updateAdapterVersionString);
+					return;
+				}
+			}
+			else
+			{
+				this.ShowFirmwareFailControl();
 			}
 		}
 
@@ -307,10 +341,10 @@ namespace TPCASTWindows.UI.Update
 
 		private void ShowSoftwareDownloadExceptionControl()
 		{
-			UpdateSoftwareDownloadExceptionControl updateSoftwareDownloadExceptionControl = new UpdateSoftwareDownloadExceptionControl();
-			updateSoftwareDownloadExceptionControl.OnRetryClick = new UpdateSoftwareDownloadExceptionControl.OnRetryClickDelegate(this.startDownloadSoftware);
+			UpdateSoftwareDownloadExceptionControl downloadExceptionControl = new UpdateSoftwareDownloadExceptionControl();
+			downloadExceptionControl.OnRetryClick = new UpdateSoftwareDownloadExceptionControl.OnRetryClickDelegate(this.startDownloadSoftware);
 			this.dialogGroup.Controls.Clear();
-			this.dialogGroup.Controls.Add(updateSoftwareDownloadExceptionControl);
+			this.dialogGroup.Controls.Add(downloadExceptionControl);
 		}
 
 		private void ShowFirmwareDownloadControl()
@@ -323,34 +357,34 @@ namespace TPCASTWindows.UI.Update
 
 		private void ShowFirmwareDownloadExceptionControl()
 		{
-			UpdateFirmwareDownloadExceptionControl updateFirmwareDownloadExceptionControl = new UpdateFirmwareDownloadExceptionControl();
-			updateFirmwareDownloadExceptionControl.OnRetryClick = new UpdateFirmwareDownloadExceptionControl.OnRetryClickDelegate(this.startDownloadFirmware);
+			UpdateFirmwareDownloadExceptionControl downloadExceptionControl = new UpdateFirmwareDownloadExceptionControl();
+			downloadExceptionControl.OnRetryClick = new UpdateFirmwareDownloadExceptionControl.OnRetryClickDelegate(this.startDownloadFirmware);
 			this.dialogGroup.Controls.Clear();
-			this.dialogGroup.Controls.Add(updateFirmwareDownloadExceptionControl);
+			this.dialogGroup.Controls.Add(downloadExceptionControl);
 		}
 
 		private void ShowFirmwareWaitingControl()
 		{
-			UpdateFirmwareWaitingControl value = new UpdateFirmwareWaitingControl();
+			UpdateFirmwareWaitingControl waitingControl = new UpdateFirmwareWaitingControl();
 			this.dialogGroup.Controls.Clear();
-			this.dialogGroup.Controls.Add(value);
+			this.dialogGroup.Controls.Add(waitingControl);
 		}
 
 		private void ShowFirmwareSuccessControl()
 		{
-			UpdateFirmwareSuccessControl updateFirmwareSuccessControl = new UpdateFirmwareSuccessControl();
-			updateFirmwareSuccessControl.OnOkClick = new UpdateFirmwareSuccessControl.OnOkClickDelegate(this.OnFirmwareUpdateSuccess);
+			UpdateFirmwareSuccessControl successControl = new UpdateFirmwareSuccessControl();
+			successControl.OnOkClick = new UpdateFirmwareSuccessControl.OnOkClickDelegate(this.OnFirmwareUpdateSuccess);
 			this.dialogGroup.Controls.Clear();
-			this.dialogGroup.Controls.Add(updateFirmwareSuccessControl);
+			this.dialogGroup.Controls.Add(successControl);
 		}
 
 		private void ShowFirmwareFailControl()
 		{
-			UpdateFirmwareFailControl updateFirmwareFailControl = new UpdateFirmwareFailControl();
-			updateFirmwareFailControl.OnRetryClick = new UpdateFirmwareFailControl.OnRetryClickDelegate(this.onRetry);
-			updateFirmwareFailControl.OnCancelClick = new UpdateFirmwareFailControl.OnCancelClickDelegate(this.OnCancelClick);
+			UpdateFirmwareFailControl failControl = new UpdateFirmwareFailControl();
+			failControl.OnRetryClick = new UpdateFirmwareFailControl.OnRetryClickDelegate(this.onRetry);
+			failControl.OnCancelClick = new UpdateFirmwareFailControl.OnCancelClickDelegate(this.OnCancelClick);
 			this.dialogGroup.Controls.Clear();
-			this.dialogGroup.Controls.Add(updateFirmwareFailControl);
+			this.dialogGroup.Controls.Add(failControl);
 		}
 
 		private void onRetry()
@@ -367,13 +401,18 @@ namespace TPCASTWindows.UI.Update
 
 		private void OnFirmwareUpdateSuccess()
 		{
-			if (!string.IsNullOrEmpty(this.softwareUrl))
+			if (string.IsNullOrEmpty(this.softwareUrl))
 			{
-				this.startDownloadSoftware();
+				base.Close();
+				base.Dispose();
 				return;
 			}
-			base.Close();
-			base.Dispose();
+			if (this.isSoftwareDownloaded)
+			{
+				this.showDoanloadSoftwareFinish();
+				return;
+			}
+			this.startDownloadSoftware();
 		}
 
 		private void OnCancelClick()
@@ -385,9 +424,9 @@ namespace TPCASTWindows.UI.Update
 		{
 			if (this.socketModel != null)
 			{
+				this.socketModel.removeSocketConnectCallback(this);
 				this.socketModel.removeSocketUpdateCallback(this);
 				this.socketModel.removeSocketExceptionCallback(this);
-				this.socketModel.disconnect();
 			}
 		}
 

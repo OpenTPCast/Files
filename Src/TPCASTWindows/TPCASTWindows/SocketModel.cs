@@ -1,3 +1,4 @@
+using NLog;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -34,12 +35,7 @@ namespace TPCASTWindows
 
 		private delegate void OnReceiveTimeoutDelegate();
 
-		private class PackageMessage
-		{
-			public byte type;
-
-			public string message = "";
-		}
+		private static Logger log = LogManager.GetCurrentClassLogger();
 
 		private Control context;
 
@@ -71,19 +67,25 @@ namespace TPCASTWindows
 
 		private SocketModel.OnReceiveTimeoutDelegate OnReceiveTimeout;
 
-		private int commandPort = 8000;
+		private int commandPort = 5974;
 
-		private int fileTransPort = 8001;
+		private int fileTransPort = 5973;
 
-		private string host = "192.168.1.88";
+		private string host = ConfigureUtil.AdapterIP();
 
-		private Socket socket;
+		private static Socket socket;
 
 		private Thread connectThread;
 
 		private Thread recieveThread;
 
-		private bool isConnected;
+		private const int TIMEOUT_RECEIVE = 5000;
+
+		private const int TIMEOUT_SEND = 5000;
+
+		private const int TIMEOUT_CONNECT = 1000;
+
+		private const int TIMEOUT_TRANSFILE = 10000;
 
 		private byte HEADER_1 = 126;
 
@@ -124,6 +126,8 @@ namespace TPCASTWindows
 		private byte DEBUG = 144;
 
 		private byte NOT_SUPPORT = 255;
+
+		private Socket transFileSocket;
 
 		private SocketModel()
 		{
@@ -175,7 +179,7 @@ namespace TPCASTWindows
 			this.socketExceptionCallbacks.Add(c);
 			this.OnSendFail = (SocketModel.OnSendFailDelegate)Delegate.Combine(this.OnSendFail, new SocketModel.OnSendFailDelegate(c.OnSendFail));
 			this.OnReceiveTimeout = (SocketModel.OnReceiveTimeoutDelegate)Delegate.Combine(this.OnReceiveTimeout, new SocketModel.OnReceiveTimeoutDelegate(c.OnReceiveTimeout));
-			Console.WriteLine("count = " + this.socketExceptionCallbacks.Count);
+			SocketModel.log.Trace("count = " + this.socketExceptionCallbacks.Count);
 		}
 
 		public void removeSocketExceptionCallback(SocketExceptonCallback c)
@@ -207,6 +211,7 @@ namespace TPCASTWindows
 			{
 				if (this.context.InvokeRequired)
 				{
+					SocketModel.log.Trace("version Count = " + this.socketConnectCallbacks.Count);
 					this.context.Invoke(this.OnVersionReceive, new object[]
 					{
 						version
@@ -355,35 +360,9 @@ namespace TPCASTWindows
 			}
 		}
 
-		public void connect()
+		private void connectCallback(IAsyncResult ar)
 		{
-			Console.WriteLine("connect");
-			if (!this.isConnected)
-			{
-				this.connectThread = new Thread(new ThreadStart(this.connectThreadStart));
-				this.connectThread.Start();
-				return;
-			}
-			this.connected(true);
-		}
-
-		private void connectThreadStart()
-		{
-			try
-			{
-				Console.WriteLine("connectThreadStart");
-				IPEndPoint remoteEP = new IPEndPoint(IPAddress.Parse(this.host), this.commandPort);
-				this.socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-				this.socket.Connect(remoteEP);
-				this.socket.ReceiveTimeout = 5000;
-				this.isConnected = true;
-				this.connected(true);
-			}
-			catch (Exception arg)
-			{
-				Console.WriteLine("e = " + arg);
-				this.connected(false);
-			}
+			SocketModel.log.Trace("connectCallback" + ar);
 		}
 
 		private void abortConnectThread()
@@ -402,16 +381,79 @@ namespace TPCASTWindows
 			}
 		}
 
+		private bool Connect()
+		{
+			SocketModel.log.Trace("Connect");
+			SocketModel.log.Trace("socket == " + SocketModel.socket);
+			if (!this.isConnected())
+			{
+				try
+				{
+					SocketModel.log.Trace("connectThreadStart");
+					IPEndPoint ipe = new IPEndPoint(IPAddress.Parse(this.host), this.commandPort);
+					SocketModel.log.Trace("new socket");
+					SocketModel.socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+					SocketModel.socket.ReceiveTimeout = 5000;
+					SocketModel.log.Trace("socket begin connect");
+					IAsyncResult ar = SocketModel.socket.BeginConnect(ipe, new AsyncCallback(this.connectCallback), SocketModel.socket);
+					ar.AsyncWaitHandle.WaitOne(1000);
+					if (ar.IsCompleted)
+					{
+						SocketModel.log.Trace("socket connect IsCompleted");
+						Logger arg_105_0 = SocketModel.log;
+						string arg_100_0 = "connected = ";
+						bool connected = ((Socket)ar.AsyncState).Connected;
+						arg_105_0.Trace(arg_100_0 + connected.ToString());
+						connected = ((Socket)ar.AsyncState).Connected;
+						return connected;
+					}
+					SocketModel.log.Trace("socket connect notCompleted");
+					if (SocketModel.socket != null)
+					{
+						SocketModel.socket.Close();
+						SocketModel.socket = null;
+					}
+					return false;
+				}
+				catch (Exception e)
+				{
+					SocketModel.log.Trace("e = " + e);
+					if (SocketModel.socket != null)
+					{
+						SocketModel.socket.Close();
+						SocketModel.socket = null;
+					}
+					return false;
+				}
+				return true;
+			}
+			return true;
+		}
+
+		private bool isConnected()
+		{
+			SocketModel.log.Trace("isConnected() ");
+			if (SocketModel.socket != null)
+			{
+				SocketModel.log.Trace("Connected = " + SocketModel.socket.Connected.ToString());
+				SocketModel.log.Trace("poll = " + SocketModel.socket.Poll(1000, SelectMode.SelectRead).ToString());
+				SocketModel.log.Trace("avail = " + (SocketModel.socket.Available == 0).ToString());
+			}
+			else
+			{
+				SocketModel.log.Trace("socket == null ");
+			}
+			return SocketModel.socket != null && (!SocketModel.socket.Poll(1000, SelectMode.SelectRead) || SocketModel.socket.Available != 0) && SocketModel.socket.Connected;
+		}
+
 		public void disconnect()
 		{
 			this.abortConnectThread();
 			this.abortRecieveThread();
-			this.isConnected = false;
-			if (this.socket != null)
+			if (SocketModel.socket != null)
 			{
-				this.socket.Close();
-				this.socket.Dispose();
-				this.socket = null;
+				SocketModel.socket.Close();
+				SocketModel.socket = null;
 			}
 		}
 
@@ -446,179 +488,163 @@ namespace TPCASTWindows
 
 		private bool isCheckSum(byte[] recBytes)
 		{
-			int num = (int)SocketModel.computeCheckSum(recBytes, recBytes.Length - 1);
-			return Convert.ToInt32(recBytes.Skip(recBytes.Length - 1).Take(1).ToArray<byte>().GetValue(0)) == num;
+			int checkSum = (int)SocketModel.computeCheckSum(recBytes, recBytes.Length - 1);
+			return Convert.ToInt32(recBytes.Skip(recBytes.Length - 1).Take(1).ToArray<byte>().GetValue(0)) == checkSum;
 		}
 
-		public void getVerion()
+		public void GetVersion()
 		{
-			Console.WriteLine("getVerion");
-			this.send(this.VERSION_REQUEST, "");
+			SocketModel.log.Trace("GetVersion");
+			this.SendMessage(this.VERSION_REQUEST, "");
 		}
 
-		public void getMac()
+		public void GetMac()
 		{
-			Console.WriteLine("getMac");
-			this.send(this.MAC_REQUEST, "");
+			SocketModel.log.Trace("GetMac");
+			this.SendMessage(this.MAC_REQUEST, "");
 		}
 
-		public void transUpdateVersion(string updateVersion)
+		public void TransUpdateVersion(string updateVersion)
 		{
-			Console.WriteLine("transUpdateVersion " + updateVersion);
-			this.send(this.UPDATE_VERSION, updateVersion);
+			SocketModel.log.Trace("TransUpdateVersion " + updateVersion);
+			this.SendMessage(this.UPDATE_VERSION, updateVersion);
 		}
 
-		public void transUpdateMd5(string updateMd5)
+		public void TransUpdateMd5(string updateMd5)
 		{
-			Console.WriteLine("transUpdateMd5 " + updateMd5);
-			this.send(this.UPDATE_MD5, updateMd5);
+			SocketModel.log.Trace("TransUpdateMd5 " + updateMd5);
+			this.SendMessage(this.UPDATE_MD5, updateMd5);
 		}
 
-		public void prepareUpdate()
+		public void PrepareUpdate()
 		{
-			Console.WriteLine("prepareUpdate");
-			this.send(this.PREPARE_UPDATE, "");
+			SocketModel.log.Trace("PrepareUpdate ");
+			this.SendMessage(this.PREPARE_UPDATE, "");
 		}
 
-		public void transFinish()
+		private void TransFinish()
 		{
-			Console.WriteLine("transFinish");
-			this.sendUpdateFinish(this.TRANS_FINISH, "");
+			SocketModel.log.Trace("TransFinish ");
+			this.SendMessage(this.TRANS_FINISH, "");
 		}
 
-		public void recoverOriginVersion()
+		public void RecoverOriginVersion()
 		{
-			Console.WriteLine("recoverOriginVersion");
-			this.send(this.RECOVER_ORIGIN_VERSION, "");
+			SocketModel.log.Trace("RecoverOriginVersion");
+			this.SendMessage(this.RECOVER_ORIGIN_VERSION, "");
 		}
 
-		public void debugMessage()
+		public void DebugMessage()
 		{
-			Console.WriteLine("debugMessage");
-			this.send(this.DEBUG, "");
+			SocketModel.log.Trace("DebugMessage");
+			this.SendMessage(this.DEBUG, "");
 		}
 
-		private void send(byte type, string message = "")
+		public void SendMessage(byte type, string message = "")
 		{
-			SocketModel.PackageMessage packageMessage = new SocketModel.PackageMessage();
-			packageMessage.type = type;
-			packageMessage.message = message;
-			new Thread(new ParameterizedThreadStart(this.sendThreadStart)).Start(packageMessage);
-		}
-
-		private void sendThreadStart(object obj)
-		{
-			if (obj is SocketModel.PackageMessage)
+			new Thread(delegate
 			{
-				SocketModel.PackageMessage expr_0E = (SocketModel.PackageMessage)obj;
-				byte type = expr_0E.type;
-				string message = expr_0E.message;
-				byte[] buffer = this.buildBuffer(type, message);
-				if (this.socket != null)
+				if (this.Connect())
 				{
-					try
-					{
-						this.socket.Send(buffer);
-					}
-					catch (SocketException arg)
-					{
-						Console.WriteLine("send e = " + arg);
-						this.sendFail();
-					}
-					this.socket.ReceiveTimeout = 5000;
-					this.receiveData();
+					this.Send(type, message);
+					return;
 				}
-			}
+				this.connected(false);
+			}).Start();
 		}
 
-		private void sendUpdateFinish(byte type, string message = "")
+		private void Send(byte type, string message = "")
 		{
-			SocketModel.PackageMessage packageMessage = new SocketModel.PackageMessage();
-			packageMessage.type = type;
-			packageMessage.message = message;
-			new Thread(new ParameterizedThreadStart(this.sendUpdateThreadStart)).Start(packageMessage);
-		}
-
-		private void sendUpdateThreadStart(object obj)
-		{
-			if (obj is SocketModel.PackageMessage)
+			byte[] buffer = this.buildBuffer(type, message);
+			if (SocketModel.socket != null)
 			{
-				SocketModel.PackageMessage expr_0E = (SocketModel.PackageMessage)obj;
-				byte type = expr_0E.type;
-				string message = expr_0E.message;
-				byte[] buffer = this.buildBuffer(type, message);
-				if (this.socket != null)
+				try
 				{
-					try
-					{
-						this.socket.Send(buffer);
-					}
-					catch (SocketException arg)
-					{
-						Console.WriteLine("send e = " + arg);
-						this.sendFail();
-					}
-					this.socket.ReceiveTimeout = 5000;
-					this.receiveData();
-					this.socket.ReceiveTimeout = 60000;
-					this.receiveData();
+					SocketModel.socket.SendTimeout = 5000;
+					SocketModel.socket.Send(buffer);
 				}
+				catch (Exception e)
+				{
+					SocketModel.log.Error("send e = " + e);
+					this.sendFail();
+				}
+				SocketModel.socket.ReceiveTimeout = 5000;
+				this.receiveData();
+				return;
 			}
+			SocketModel.log.Error("socket == null");
+			this.sendFail();
 		}
 
 		private byte[] buildBuffer(byte type, string message = "")
 		{
-			byte[] array = this.buildBufferWithHeader();
-			array = this.appendData(array, new byte[1]);
-			array = this.appendData(array, type);
-			byte[] array2;
+			byte[] buffer = this.buildBufferWithHeader();
+			buffer = this.appendData(buffer, new byte[1]);
+			buffer = this.appendData(buffer, type);
+			byte[] data;
 			if (string.IsNullOrEmpty(message))
 			{
-				array2 = new byte[1];
+				data = new byte[1];
 			}
 			else
 			{
-				array2 = Encoding.Default.GetBytes(message);
+				data = Encoding.Default.GetBytes(message);
 			}
-			array = this.appendData(array, array2.Length);
-			array = this.appendData(array, array2);
-			byte[] arg_5A_1 = array;
-			byte[] expr_52 = array;
+			buffer = this.appendData(buffer, data.Length);
+			buffer = this.appendData(buffer, data);
+			byte[] arg_5A_1 = buffer;
+			byte[] expr_52 = buffer;
 			return this.appendData(arg_5A_1, SocketModel.computeCheckSum(expr_52, expr_52.Length));
 		}
 
 		private void receiveData()
 		{
+			SocketModel.log.Trace("receiveData");
 			try
 			{
-				byte[] array = new byte[64];
-				Socket arg_13_0 = this.socket;
-				byte[] expr_0F = array;
-				int num = arg_13_0.Receive(expr_0F, expr_0F.Length, SocketFlags.None);
-				if (num > 0)
+				byte[] recBytes = new byte[64];
+				Socket arg_21_0 = SocketModel.socket;
+				byte[] expr_1D = recBytes;
+				int count = arg_21_0.Receive(expr_1D, expr_1D.Length, SocketFlags.None);
+				if (count > 0)
 				{
-					Console.WriteLine("read bytes = " + num);
-					array = array.Take(num).ToArray<byte>();
-					Console.WriteLine("cut bytes = " + array.Count<byte>());
-					if (this.isCheckSum(array))
+					SocketModel.log.Trace("read bytes = " + count);
+					recBytes = recBytes.Take(count).ToArray<byte>();
+					SocketModel.log.Trace("cut bytes = " + recBytes.Count<byte>());
+					if (this.isCheckSum(recBytes))
 					{
-						Console.WriteLine("check sum ok");
-						this.parseData(array);
+						SocketModel.log.Trace("check sum ok");
+						this.parseData(recBytes);
 					}
 					else
 					{
-						Console.WriteLine("check sum no");
+						SocketModel.log.Trace("check sum no");
+					}
+				}
+				else if (count == 0)
+				{
+					SocketModel.log.Error("count == 0");
+					this.receiveData();
+				}
+				else
+				{
+					SocketModel.log.Error("count < 0");
+					this.sendFail();
+					if (SocketModel.socket != null)
+					{
+						SocketModel.socket.Close();
+						SocketModel.socket = null;
 					}
 				}
 			}
-			catch (Exception arg)
+			catch (Exception e)
 			{
-				Console.WriteLine("error = " + arg);
+				SocketModel.log.Error("error = " + e);
 				this.receiveTimeout();
-				if (this.socket != null)
+				if (SocketModel.socket != null)
 				{
-					this.socket.Close();
-					this.socket = null;
+					SocketModel.socket.Close();
+					SocketModel.socket = null;
 				}
 			}
 		}
@@ -632,25 +658,25 @@ namespace TPCASTWindows
 				{
 					try
 					{
-						byte[] array = new byte[64];
-						Socket arg_1E_0 = socket;
-						byte[] expr_1A = array;
-						int count = arg_1E_0.Receive(expr_1A, expr_1A.Length, SocketFlags.None);
-						array = array.Take(count).ToArray<byte>();
-						if (this.isCheckSum(array))
+						byte[] recBytes = new byte[64];
+						Socket arg_21_0 = socket;
+						byte[] expr_1D = recBytes;
+						int count = arg_21_0.Receive(expr_1D, expr_1D.Length, SocketFlags.None);
+						recBytes = recBytes.Take(count).ToArray<byte>();
+						if (this.isCheckSum(recBytes))
 						{
-							Console.WriteLine("check sum ok");
-							this.parseData(array);
+							SocketModel.log.Trace("check sum ok");
+							this.parseData(recBytes);
 						}
 						else
 						{
-							Console.WriteLine("check sum no");
+							SocketModel.log.Trace("check sum no");
 						}
 						continue;
 					}
-					catch (Exception arg)
+					catch (Exception e)
 					{
-						Console.WriteLine("error = " + arg);
+						SocketModel.log.Error("error = " + e);
 						this.receiveTimeout();
 						if (socket != null)
 						{
@@ -665,222 +691,242 @@ namespace TPCASTWindows
 
 		private void parseData(byte[] recBytes)
 		{
-			byte b = Convert.ToByte(recBytes.Skip(3).Take(1).ToArray<byte>().GetValue(0));
-			Console.WriteLine("type = " + b);
-			if (b == this.VERSION_RECEIVE)
+			byte dataType = Convert.ToByte(recBytes.Skip(3).Take(1).ToArray<byte>().GetValue(0));
+			SocketModel.log.Trace("type = " + dataType);
+			if (dataType == this.VERSION_RECEIVE)
 			{
-				Console.WriteLine("version recieve");
-				int count = Convert.ToInt32(recBytes.Skip(4).Take(1).ToArray<byte>().GetValue(0));
-				byte[] bytes = recBytes.Skip(5).Take(count).ToArray<byte>();
-				string @string = Encoding.UTF8.GetString(bytes, 0, count);
-				this.versionReceive(@string.Trim());
-				Console.WriteLine("version = " + @string);
+				SocketModel.log.Trace("version recieve");
+				int dataCount = Convert.ToInt32(recBytes.Skip(4).Take(1).ToArray<byte>().GetValue(0));
+				byte[] data = recBytes.Skip(5).Take(dataCount).ToArray<byte>();
+				string version = Encoding.UTF8.GetString(data, 0, dataCount);
+				this.versionReceive(version.Trim());
+				SocketModel.log.Trace("version = " + version);
 			}
-			else if (b == this.MAC_RECEIVE)
+			else if (dataType == this.MAC_RECEIVE)
 			{
-				Console.WriteLine("mac recieve");
-				int count2 = Convert.ToInt32(recBytes.Skip(4).Take(1).ToArray<byte>().GetValue(0));
-				byte[] bytes2 = recBytes.Skip(5).Take(count2).ToArray<byte>();
-				string string2 = Encoding.UTF8.GetString(bytes2, 0, count2);
-				this.macReceive(string2);
-				Console.WriteLine("mac = " + string2);
+				SocketModel.log.Trace("mac recieve");
+				int dataCount2 = Convert.ToInt32(recBytes.Skip(4).Take(1).ToArray<byte>().GetValue(0));
+				byte[] data2 = recBytes.Skip(5).Take(dataCount2).ToArray<byte>();
+				string mac = Encoding.UTF8.GetString(data2, 0, dataCount2);
+				this.macReceive(mac);
+				SocketModel.log.Trace("mac = " + mac);
 			}
-			else if (b == this.UPDATE_VERSION_RECEIVE)
+			else if (dataType == this.UPDATE_VERSION_RECEIVE)
 			{
-				Console.WriteLine("update version receive");
-				int count3 = Convert.ToInt32(recBytes.Skip(4).Take(1).ToArray<byte>().GetValue(0));
-				byte b2 = recBytes.Skip(5).Take(count3).ToArray<byte>()[0];
-				if (b2 == 1)
+				SocketModel.log.Trace("update version receive");
+				int dataCount3 = Convert.ToInt32(recBytes.Skip(4).Take(1).ToArray<byte>().GetValue(0));
+				byte result = recBytes.Skip(5).Take(dataCount3).ToArray<byte>()[0];
+				if (result == 1)
 				{
-					Console.WriteLine("update version success");
+					SocketModel.log.Trace("update version success");
 					this.updateVersionReceive(true);
 				}
-				else if (b2 == 255)
+				else if (result == 255)
 				{
-					Console.WriteLine("update version fail");
+					SocketModel.log.Trace("update version fail");
 					this.updateVersionReceive(false);
 				}
 				else
 				{
-					Console.WriteLine("update version result = " + b2);
+					SocketModel.log.Trace("update version result = " + result);
 					this.updateVersionReceive(false);
 				}
 			}
-			else if (b == this.UPDATE_MD5_RECEIVE)
+			else if (dataType == this.UPDATE_MD5_RECEIVE)
 			{
-				Console.WriteLine("update md5 receive");
-				int count4 = Convert.ToInt32(recBytes.Skip(4).Take(1).ToArray<byte>().GetValue(0));
-				byte b3 = recBytes.Skip(5).Take(count4).ToArray<byte>()[0];
-				if (b3 == 1)
+				SocketModel.log.Trace("update md5 receive");
+				int dataCount4 = Convert.ToInt32(recBytes.Skip(4).Take(1).ToArray<byte>().GetValue(0));
+				byte result2 = recBytes.Skip(5).Take(dataCount4).ToArray<byte>()[0];
+				if (result2 == 1)
 				{
-					Console.WriteLine("update md5 success");
+					SocketModel.log.Trace("update md5 success");
 					this.updateMd5Receive(true);
 				}
-				else if (b3 == 255)
+				else if (result2 == 255)
 				{
-					Console.WriteLine("update md5 fail");
+					SocketModel.log.Trace("update md5 fail");
 					this.updateMd5Receive(false);
 				}
 				else
 				{
-					Console.WriteLine("update md5 result = " + b3);
+					SocketModel.log.Trace("update md5 result = " + result2);
 					this.updateMd5Receive(false);
 				}
 			}
-			else if (b == this.STADNBY)
+			else if (dataType == this.STADNBY)
 			{
-				Console.WriteLine("update standby");
-				int num = Convert.ToInt32(recBytes.Skip(4).Take(1).ToArray<byte>().GetValue(0));
-				Console.WriteLine("dataCount = " + num);
-				byte b4 = recBytes.Skip(5).Take(num).ToArray<byte>()[0];
-				Console.WriteLine("result = " + b4);
-				if (b4 == 1)
+				SocketModel.log.Trace("update standby");
+				int dataCount5 = Convert.ToInt32(recBytes.Skip(4).Take(1).ToArray<byte>().GetValue(0));
+				SocketModel.log.Trace("dataCount = " + dataCount5);
+				byte result3 = recBytes.Skip(5).Take(dataCount5).ToArray<byte>()[0];
+				SocketModel.log.Trace("result = " + result3);
+				if (result3 == 1)
 				{
-					Console.WriteLine("update standby success");
+					SocketModel.log.Trace("update standby success");
 					this.updateReady(true);
 				}
-				else if (b4 == 255)
+				else if (result3 == 255)
 				{
-					Console.WriteLine("update standby fail");
+					SocketModel.log.Trace("update standby fail");
 					this.updateReady(false);
 				}
 				else
 				{
-					Console.WriteLine("update standby result = " + b4);
+					SocketModel.log.Trace("update standby result = " + result3);
 					this.updateReady(false);
 				}
 			}
-			else if (b == this.MD5_CHECK_RESULT)
+			else if (dataType == this.MD5_CHECK_RESULT)
 			{
-				Console.WriteLine("md5 result");
-				int count5 = Convert.ToInt32(recBytes.Skip(4).Take(1).ToArray<byte>().GetValue(0));
-				byte b5 = recBytes.Skip(5).Take(count5).ToArray<byte>()[0];
-				if (b5 == 1)
+				SocketModel.log.Trace("md5 result");
+				int dataCount6 = Convert.ToInt32(recBytes.Skip(4).Take(1).ToArray<byte>().GetValue(0));
+				byte result4 = recBytes.Skip(5).Take(dataCount6).ToArray<byte>()[0];
+				if (result4 == 1)
 				{
-					Console.WriteLine("md5 success");
+					SocketModel.log.Trace("md5 success");
 					this.md5CheckResult(true);
+					if (SocketModel.socket != null)
+					{
+						SocketModel.socket.ReceiveTimeout = 10000;
+						this.receiveData();
+					}
 				}
-				else if (b5 == 255)
+				else if (result4 == 255)
 				{
-					Console.WriteLine("md5 fail");
+					SocketModel.log.Trace("md5 fail");
 					this.md5CheckResult(false);
 				}
 				else
 				{
-					Console.WriteLine("md5 result = " + b5);
+					SocketModel.log.Trace("md5 result = " + result4);
 					this.md5CheckResult(false);
 				}
 			}
-			else if (b == this.UPDATE_RESULT)
+			else if (dataType == this.UPDATE_RESULT)
 			{
-				Console.WriteLine("update result");
-				int count6 = Convert.ToInt32(recBytes.Skip(4).Take(1).ToArray<byte>().GetValue(0));
-				byte b6 = recBytes.Skip(5).Take(count6).ToArray<byte>()[0];
-				if (b6 == 1)
+				SocketModel.log.Trace("update result");
+				int dataCount7 = Convert.ToInt32(recBytes.Skip(4).Take(1).ToArray<byte>().GetValue(0));
+				byte result5 = recBytes.Skip(5).Take(dataCount7).ToArray<byte>()[0];
+				if (result5 == 1)
 				{
-					Console.WriteLine("update success");
+					SocketModel.log.Trace("update success");
 					this.updateFinish(true);
 				}
-				else if (b6 == 255)
+				else if (result5 == 255)
 				{
-					Console.WriteLine("update fail");
+					SocketModel.log.Trace("update fail");
 					this.updateFinish(false);
 				}
 				else
 				{
-					Console.WriteLine("update result = " + b6);
+					SocketModel.log.Trace("update result = " + result5);
 					this.updateFinish(false);
 				}
 			}
-			else if (b == this.RECOVER_RESULT)
+			else if (dataType == this.RECOVER_RESULT)
 			{
-				Console.WriteLine("recover result");
-				int count7 = Convert.ToInt32(recBytes.Skip(4).Take(1).ToArray<byte>().GetValue(0));
-				byte b7 = recBytes.Skip(5).Take(count7).ToArray<byte>()[0];
-				if (b7 == 1)
+				SocketModel.log.Trace("recover result");
+				int dataCount8 = Convert.ToInt32(recBytes.Skip(4).Take(1).ToArray<byte>().GetValue(0));
+				byte result6 = recBytes.Skip(5).Take(dataCount8).ToArray<byte>()[0];
+				if (result6 == 1)
 				{
-					Console.WriteLine("recover success");
+					SocketModel.log.Trace("recover success");
 					this.recoverResult(true);
 				}
-				else if (b7 == 255)
+				else if (result6 == 255)
 				{
-					Console.WriteLine("recover fail");
+					SocketModel.log.Trace("recover fail");
 					this.recoverResult(false);
 				}
 				else
 				{
-					Console.WriteLine("recover result = " + b7);
+					SocketModel.log.Trace("recover result = " + result6);
 					this.recoverResult(false);
 				}
 			}
-			else if (b == this.ERROR_CODE)
+			else if (dataType == this.ERROR_CODE)
 			{
-				Console.WriteLine("error code");
-				int count8 = Convert.ToInt32(recBytes.Skip(4).Take(1).ToArray<byte>().GetValue(0));
-				byte b8 = recBytes.Skip(5).Take(count8).ToArray<byte>()[0];
-				Console.WriteLine("error codet = " + b8);
+				SocketModel.log.Trace("error code");
+				int dataCount9 = Convert.ToInt32(recBytes.Skip(4).Take(1).ToArray<byte>().GetValue(0));
+				byte result7 = recBytes.Skip(5).Take(dataCount9).ToArray<byte>()[0];
+				SocketModel.log.Trace("error codet = " + result7);
 			}
-			else if (b == this.NOT_SUPPORT)
+			else if (dataType == this.NOT_SUPPORT)
 			{
-				Console.WriteLine("not support");
+				SocketModel.log.Trace("not support");
 			}
 			Thread.Sleep(38);
 		}
 
 		public void transFile(string filePath)
 		{
-			Console.WriteLine("transFile");
-			try
+			SocketModel.log.Trace("transFile");
+			new Thread(new ParameterizedThreadStart(this.transFileThreadStart)).Start(filePath);
+		}
+
+		private void transFileThreadStart(object obj)
+		{
+			if (obj is string)
 			{
-				IPEndPoint remoteEP = new IPEndPoint(IPAddress.Parse(this.host), this.fileTransPort);
-				Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-				socket.Connect(remoteEP);
-				FileStream fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
-				string s = filePath.Split(new string[]
+				string filePath = (string)obj;
+				try
 				{
-					"\\"
-				}, StringSplitOptions.None).Last<string>();
-				byte[] buffer = new byte[fileStream.Length];
-				fileStream.Read(buffer, 0, (int)fileStream.Length);
-				byte[] bytes = Encoding.Default.GetBytes(s);
-				Console.WriteLine("send data");
-				socket.Send(bytes);
-				Thread.Sleep(1000);
-				socket.Send(buffer);
-				Console.WriteLine("send data finish");
-				fileStream.Close();
-				socket.Close();
+					IPEndPoint ipe = new IPEndPoint(IPAddress.Parse(this.host), this.fileTransPort);
+					this.transFileSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+					this.transFileSocket.Connect(ipe);
+					FileStream fs = new FileStream(filePath, FileMode.Open, FileAccess.Read);
+					string fileName = filePath.Split(new string[]
+					{
+						"\\"
+					}, StringSplitOptions.None).Last<string>();
+					byte[] buffByte = new byte[fs.Length];
+					fs.Read(buffByte, 0, (int)fs.Length);
+					byte[] fileNameData = Encoding.Default.GetBytes(fileName);
+					SocketModel.log.Trace("send data");
+					this.transFileSocket.SendTimeout = 5000;
+					this.transFileSocket.Send(fileNameData);
+					Thread.Sleep(1000);
+					this.transFileSocket.Send(buffByte);
+					SocketModel.log.Trace("send data finish");
+					fs.Close();
+					this.transFileSocket.Close();
+					this.transFileSocket = null;
+				}
+				catch (Exception e)
+				{
+					SocketModel.log.Error("e = " + e);
+					this.sendFail();
+					if (this.transFileSocket != null)
+					{
+						this.transFileSocket.Close();
+						this.transFileSocket = null;
+					}
+				}
+				Thread.Sleep(2000);
+				this.TransFinish();
 			}
-			catch (Exception arg)
-			{
-				Console.WriteLine("e = " + arg);
-				this.socket.Close();
-				this.socket = null;
-			}
-			Thread.Sleep(2000);
-			this.transFinish();
 		}
 
 		private static byte computeCheckSum(byte[] buff, int len)
 		{
-			int num = 0;
+			int chksum = 0;
 			for (int i = 0; i < len; i++)
 			{
-				num += (int)(buff[i] & Convert.ToByte(255));
+				chksum += (int)(buff[i] & Convert.ToByte(255));
 			}
-			while (num >> 8 != 0)
+			while (chksum >> 8 != 0)
 			{
-				num = (num >> 8) + (num & (int)Convert.ToByte(255));
+				chksum = (chksum >> 8) + (chksum & (int)Convert.ToByte(255));
 			}
-			return (byte)(~num & (int)Convert.ToByte(255));
+			return (byte)(~chksum & (int)Convert.ToByte(255));
 		}
 
 		private void output(byte[] recBytes)
 		{
 			for (int i = 0; i < recBytes.Length; i++)
 			{
-				byte b = recBytes[i];
-				Console.WriteLine("recBytes = " + b);
+				byte d = recBytes[i];
+				SocketModel.log.Trace("recBytes = " + d);
 			}
 		}
 	}

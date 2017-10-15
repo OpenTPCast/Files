@@ -2,12 +2,15 @@ using System;
 using System.ComponentModel;
 using System.Drawing;
 using System.Windows.Forms;
+using TPCASTWindows.Utils;
 
 namespace TPCASTWindows
 {
-	public class ControlInterruptDialog : BaseDialogForm
+	public class ControlInterruptDialog : BaseDialogForm, ConnectReloadCallback
 	{
 		public delegate void OnBackClickDelegate();
+
+		private ConnectModel connectModel;
 
 		public int status;
 
@@ -23,8 +26,8 @@ namespace TPCASTWindows
 		{
 			this.InitializeComponent();
 			this.closeButton.Visible = false;
-			Util.OnHostConnected = new Util.OnHostConnectedDelegate(this.OnHostConnected);
-			Util.OnControlConnectedError = new Util.OnControlConnectedErrorDelegate(this.OnControlConnectedError);
+			this.connectModel = new ConnectModel(this);
+			this.connectModel.setConnectReloadCallback(this);
 		}
 
 		private void ControlInterruptDialog_Load(object sender, EventArgs e)
@@ -63,58 +66,62 @@ namespace TPCASTWindows
 			{
 				base.Close();
 				base.Dispose();
-				Util.ConnectAnimateionResume();
-				Util.StartBackgroundCheckControlThread();
+				AnimationModel.ConnectAnimateionResume();
+				LoopCheckModel.StartBackgroundCheckControlThread();
 			}
 		}
 
 		private void ShowCheckControl()
 		{
-			ControlInterruptCheckControl controlInterruptCheckControl = new ControlInterruptCheckControl();
-			controlInterruptCheckControl.OnWaitClick = new ControlInterruptCheckControl.OnWaitClickDelegate(this.ShowWaitControl);
+			ControlInterruptCheckControl checkControl = new ControlInterruptCheckControl();
+			checkControl.OnWaitClick = new ControlInterruptCheckControl.OnWaitClickDelegate(this.ShowWaitControl);
 			this.dialogGroup.Controls.Clear();
-			this.dialogGroup.Controls.Add(controlInterruptCheckControl);
+			this.dialogGroup.Controls.Add(checkControl);
 		}
 
 		private void ShowRebootControl()
 		{
-			ControlInterruptRebootControl controlInterruptRebootControl = new ControlInterruptRebootControl();
-			controlInterruptRebootControl.OnOkClick = new ControlInterruptRebootControl.OnOkClickDelegate(this.BackClick);
+			ControlInterruptRebootControl rebootControl = new ControlInterruptRebootControl();
+			rebootControl.OnOkClick = new ControlInterruptRebootControl.OnOkClickDelegate(this.BackClick);
 			this.dialogGroup.Controls.Clear();
-			this.dialogGroup.Controls.Add(controlInterruptRebootControl);
+			this.dialogGroup.Controls.Add(rebootControl);
 		}
 
 		private void ShowRouterControl()
 		{
-			ControlInterruptRouterControl controlInterruptRouterControl = new ControlInterruptRouterControl();
-			controlInterruptRouterControl.OnWaitClick = new ControlInterruptRouterControl.OnWaitClickDelegate(this.ShowWaitControl);
-			controlInterruptRouterControl.OnBackClick = new ControlInterruptRouterControl.OnBackClickDelegate(this.BackClick);
+			ControlInterruptRouterControl routerControl = new ControlInterruptRouterControl();
+			routerControl.OnWaitClick = new ControlInterruptRouterControl.OnWaitClickDelegate(this.ShowWaitControl);
+			routerControl.OnBackClick = new ControlInterruptRouterControl.OnBackClickDelegate(this.BackClick);
 			this.dialogGroup.Controls.Clear();
-			this.dialogGroup.Controls.Add(controlInterruptRouterControl);
+			this.dialogGroup.Controls.Add(routerControl);
 		}
 
 		private void ShowRaspberryControl()
 		{
-			ControlInterruptRaspberryControl controlInterruptRaspberryControl = new ControlInterruptRaspberryControl();
-			controlInterruptRaspberryControl.OnWaitClick = new ControlInterruptRaspberryControl.OnWaitClickDelegate(this.ShowWaitControl);
-			controlInterruptRaspberryControl.OnBackClick = new ControlInterruptRaspberryControl.OnBackClickDelegate(this.BackClick);
+			ControlInterruptRaspberryControl raspberryControl = new ControlInterruptRaspberryControl();
+			raspberryControl.OnWaitClick = new ControlInterruptRaspberryControl.OnWaitClickDelegate(this.ShowWaitControl);
+			raspberryControl.OnBackClick = new ControlInterruptRaspberryControl.OnBackClickDelegate(this.BackClick);
 			this.dialogGroup.Controls.Clear();
-			this.dialogGroup.Controls.Add(controlInterruptRaspberryControl);
+			this.dialogGroup.Controls.Add(raspberryControl);
 		}
 
 		private void ShowCableControl()
 		{
-			ControlInterruptCableControl controlInterruptCableControl = new ControlInterruptCableControl();
-			controlInterruptCableControl.OnRetry = new ControlInterruptCableControl.OnRetryDelegate(this.ShowWaitControl);
+			ControlInterruptCableControl cableControl = new ControlInterruptCableControl();
+			cableControl.OnRetry = new ControlInterruptCableControl.OnRetryDelegate(this.ShowWaitControl);
 			this.dialogGroup.Controls.Clear();
-			this.dialogGroup.Controls.Add(controlInterruptCableControl);
+			this.dialogGroup.Controls.Add(cableControl);
 		}
 
-		private void OnHostConnected()
+		public void OnRouterConnected()
 		{
 		}
 
-		private void OnControlConnectedError(int error)
+		public void OnHostConnected()
+		{
+		}
+
+		public void OnReloadCheckError(int error)
 		{
 			this.ShowControlByStatus(error);
 		}
@@ -125,13 +132,19 @@ namespace TPCASTWindows
 			this.waitControl.OnBackClick = new ControlInterruptWaitControl.OnBackClickDelegate(this.BackClick);
 			this.dialogGroup.Controls.Clear();
 			this.dialogGroup.Controls.Add(this.waitControl);
-			Util.StartCheckControlReloadThread();
+			if (this.connectModel != null)
+			{
+				this.connectModel.StartCheckControlReloadThread();
+			}
 		}
 
 		private void BackClick()
 		{
-			Util.AbortBackgroundCheckControlThread();
-			Util.AbortCheckControlReloadThread();
+			LoopCheckModel.AbortBackgroundCheckControlThread();
+			if (this.connectModel != null)
+			{
+				this.connectModel.AbortCheckControlReloadThread();
+			}
 			base.Close();
 			base.Dispose();
 			if (this.OnBackClick != null)

@@ -54,24 +54,24 @@ namespace TPCASTWindows
 			Console.WriteLine(expr_52);
 			this.channelTableLayout.HorizontalScroll.Visible = false;
 			this.channelTableLayout.VerticalScroll.Visible = false;
-			foreach (Channel current in JsonConvert.DeserializeObject<List<Channel>>(expr_52))
+			foreach (Channel channel2 in JsonConvert.DeserializeObject<List<Channel>>(expr_52))
 			{
 				Button button = new Button();
 				button.FlatStyle = FlatStyle.Flat;
 				button.Font = new Font("宋体", 12f, FontStyle.Regular, GraphicsUnit.Pixel);
 				button.ForeColor = Color.FromArgb(25, 25, 25);
 				button.Size = new Size(50, 20);
-				button.Text = current.name;
-				PictureBox pictureBox = new PictureBox();
-				pictureBox.Size = new Size(10, 10);
-				pictureBox.Image = Resources.network_channel_check;
-				pictureBox.Parent = button;
-				PictureBox expr_116 = pictureBox;
-				expr_116.Location = new Point(expr_116.Parent.Width - pictureBox.Width, pictureBox.Parent.Height - pictureBox.Height);
-				pictureBox.Visible = current.isChecked;
-				if (current.isChecked)
+				button.Text = channel2.name;
+				PictureBox checkImage = new PictureBox();
+				checkImage.Size = new Size(10, 10);
+				checkImage.Image = Resources.network_channel_check;
+				checkImage.Parent = button;
+				PictureBox expr_116 = checkImage;
+				expr_116.Location = new Point(expr_116.Parent.Width - checkImage.Width, checkImage.Parent.Height - checkImage.Height);
+				checkImage.Visible = channel2.isChecked;
+				if (channel2.isChecked)
 				{
-					this.checkedImage = pictureBox;
+					this.checkedImage = checkImage;
 				}
 				button.Click += new EventHandler(this.button_Click);
 				this.channelTableLayout.Controls.Add(button);
@@ -89,13 +89,13 @@ namespace TPCASTWindows
 			foreach (Control expr_2F in expr_0C.Controls)
 			{
 				Console.WriteLine(expr_2F);
-				PictureBox pictureBox = expr_2F as PictureBox;
-				pictureBox.Visible = true;
-				if (this.checkedImage != null && this.checkedImage != pictureBox)
+				PictureBox checkImage = expr_2F as PictureBox;
+				checkImage.Visible = true;
+				if (this.checkedImage != null && this.checkedImage != checkImage)
 				{
 					this.checkedImage.Visible = false;
 				}
-				this.checkedImage = pictureBox;
+				this.checkedImage = checkImage;
 			}
 		}
 

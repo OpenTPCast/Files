@@ -69,7 +69,17 @@ namespace TPCASTUtil
 				{
 					if (args[0] == "kill")
 					{
-						Program.killTPCASTWindows();
+						Program.killProcess("TPCASTWindows.exe");
+						return;
+					}
+					if (args[0] == "killBA")
+					{
+						Program.killProcess("TPCAST_BA.exe");
+						return;
+					}
+					if (args[0] == "killBAM")
+					{
+						Program.killProcess("TPCAST_M.exe");
 						return;
 					}
 					if (args[0] == "properties")
@@ -80,6 +90,55 @@ namespace TPCASTUtil
 							DirectoryInfo directoryInfo = directories[i];
 							Console.WriteLine("dir " + directoryInfo);
 							directoryInfo.Delete(true);
+						}
+						return;
+					}
+					if (args[0] == "generate")
+					{
+						FileStream expr_1CB = new FileStream(Environment.CurrentDirectory + "\\configuration.ini", FileMode.Create);
+						StreamWriter streamWriter = new StreamWriter(expr_1CB);
+						if (args.Count<string>() > 1)
+						{
+							if (args[1] == "Group_1")
+							{
+								streamWriter.WriteLine("192.168.144.88:5881");
+								streamWriter.WriteLine("192.168.144.88:5882");
+								streamWriter.WriteLine("192.168.144.88:5883");
+								streamWriter.WriteLine("192.168.144.88:5884");
+							}
+							else if (args[1] == "Group_2")
+							{
+								streamWriter.WriteLine("192.168.144.90:5881");
+								streamWriter.WriteLine("192.168.144.90:5882");
+								streamWriter.WriteLine("192.168.144.90:5883");
+								streamWriter.WriteLine("192.168.144.90:5884");
+							}
+							else if (args[1] == "Group_3")
+							{
+								streamWriter.WriteLine("192.168.144.92:5881");
+								streamWriter.WriteLine("192.168.144.92:5882");
+								streamWriter.WriteLine("192.168.144.92:5883");
+								streamWriter.WriteLine("192.168.144.92:5884");
+							}
+							else if (args[1] == "Group_4")
+							{
+								streamWriter.WriteLine("192.168.144.94:5881");
+								streamWriter.WriteLine("192.168.144.94:5882");
+								streamWriter.WriteLine("192.168.144.94:5883");
+								streamWriter.WriteLine("192.168.144.94:5884");
+							}
+						}
+						streamWriter.Flush();
+						streamWriter.Close();
+						expr_1CB.Close();
+						return;
+					}
+					if (args[0] == "configuration")
+					{
+						string path = Environment.CurrentDirectory + "\\configuration.ini";
+						if (File.Exists(path))
+						{
+							File.Delete(path);
 						}
 					}
 				}
@@ -98,7 +157,7 @@ namespace TPCASTUtil
 		[DllImport("KERNEL32.DLL ")]
 		public static extern int Process32Next(IntPtr handle, ref Program.ProcessEntry32 pe);
 
-		public static void killTPCASTWindows()
+		public static void killProcess(string name)
 		{
 			IntPtr intPtr = Program.CreateToolhelp32Snapshot(2u, 0u);
 			List<Program.ProcessEntry32> list = new List<Program.ProcessEntry32>();
@@ -117,15 +176,15 @@ namespace TPCASTUtil
 				Program.CloseHandle(intPtr);
 				foreach (Program.ProcessEntry32 current in list)
 				{
-					if ("TPCASTWindows.exe".Equals(current.szExeFile))
+					if (name.Equals(current.szExeFile))
 					{
 						try
 						{
 							Process.GetProcessById((int)current.th32ProcessID).Kill();
 						}
-						catch (Exception arg_CE_0)
+						catch (Exception arg_CA_0)
 						{
-							Console.WriteLine(arg_CE_0.Message);
+							Console.WriteLine(arg_CA_0.Message);
 						}
 					}
 				}

@@ -1,3 +1,4 @@
+using NLog;
 using RestSharp;
 using System;
 using System.ComponentModel;
@@ -7,7 +8,7 @@ using System.Net;
 using System.Reflection;
 using System.Threading;
 using System.Windows.Forms;
-using TPCASTWindows.Resources;
+using TPCASTWindows.Properties;
 using TPCASTWindows.UI.Update;
 
 namespace TPCASTWindows.UI
@@ -15,6 +16,8 @@ namespace TPCASTWindows.UI
 	public class UpdateDialog : BaseDialogForm, DownloadCallbackInterface, SocketConnectCallback, SocketUpdateCallback, SocketExceptonCallback
 	{
 		public delegate void OnDialogCloseDelegate();
+
+		private static Logger log = LogManager.GetCurrentClassLogger();
 
 		private SocketModel socketModel;
 
@@ -55,12 +58,10 @@ namespace TPCASTWindows.UI
 		public UpdateDialog()
 		{
 			this.InitializeComponent();
-			if (this.socketModel != null)
-			{
-				this.socketModel.addSocketConnectCallback(this);
-				this.socketModel.addSocketUpdateCallback(this);
-				this.socketModel.addSocketExceptionCallback(this);
-			}
+			this.socketModel = new SocketModel(this);
+			this.socketModel.addSocketConnectCallback(this);
+			this.socketModel.addSocketUpdateCallback(this);
+			this.socketModel.addSocketExceptionCallback(this);
 			this.ShowUpdateMessage();
 		}
 
@@ -69,7 +70,7 @@ namespace TPCASTWindows.UI
 			this.ShowUpdateCheckControl();
 			if (this.socketModel != null)
 			{
-				this.socketModel.connect();
+				this.socketModel.GetVersion();
 			}
 		}
 
@@ -79,34 +80,34 @@ namespace TPCASTWindows.UI
 			{
 				if (this.socketModel != null)
 				{
-					this.socketModel.getVerion();
+					this.socketModel.GetVersion();
 					return;
 				}
 			}
 			else
 			{
-				this.checkControl.setFirmwareLabel(Localization.firmwareVersion + Localization.firmwareUnconnected);
+				this.checkControl.setFirmwareLabel(Resources.firmwareVersion + Resources.firmwareUnconnected);
 				this.requestUpdate("", "");
 			}
 		}
 
 		public void OnVersionReceive(string version)
 		{
-			Console.WriteLine("version = " + version);
+			UpdateDialog.log.Trace("version = " + version);
 			this.currentAdapterVersion = version;
 			if (this.checkControl != null)
 			{
-				this.checkControl.setFirmwareLabel(Localization.firmwareVersion + "v" + version);
+				this.checkControl.setFirmwareLabel(Resources.firmwareVersion + "v" + version);
 			}
 			if (this.socketModel != null)
 			{
-				this.socketModel.getMac();
+				this.socketModel.GetMac();
 			}
 		}
 
 		public void OnMacReceive(string mac)
 		{
-			Console.WriteLine("mac = " + mac);
+			UpdateDialog.log.Trace("mac = " + mac);
 			this.requestUpdate(this.currentAdapterVersion, mac);
 		}
 
@@ -130,23 +131,23 @@ namespace TPCASTWindows.UI
 					{
 						if (response.Data.roms.adapter != null && !string.IsNullOrEmpty(adapterVersion) && !string.IsNullOrEmpty(sn))
 						{
-							UpdateMessage recommend = response.Data.roms.adapter.recommend;
-							if (recommend != null)
+							UpdateMessage updateMessage = response.Data.roms.adapter.recommend;
+							if (updateMessage != null)
 							{
-								this.updateAdapterVersionString = recommend.version;
-								Version arg_AB_0 = new Version(recommend.version);
-								Version value = new Version(adapterVersion);
-								if (arg_AB_0.CompareTo(value) > 0)
+								this.updateAdapterVersionString = updateMessage.version;
+								Version arg_AB_0 = new Version(updateMessage.version);
+								Version currentAdapterVersion = new Version(adapterVersion);
+								if (arg_AB_0.CompareTo(currentAdapterVersion) > 0)
 								{
-									this.adapterUrl = recommend.url;
-									this.adapterMd5 = recommend.md5;
-									if (File.Exists(Constants.updateAdapterFilePath) && CryptoUtil.GetMD5HashFromFile(Constants.updateAdapterFilePath).Equals(recommend.md5))
+									this.adapterUrl = updateMessage.url;
+									this.adapterMd5 = updateMessage.md5;
+									if (File.Exists(Constants.updateAdapterFilePath) && CryptoUtil.GetMD5HashFromFile(Constants.updateAdapterFilePath).Equals(updateMessage.md5))
 									{
 										this.isSoftwareDownloaded = true;
 									}
 									if (this.checkControl != null)
 									{
-										this.checkControl.setFirmwareLabel(Localization.firmwareVersion + "v" + recommend.version);
+										this.checkControl.setFirmwareLabel(Resources.firmwareVersion + "v" + updateMessage.version);
 										this.checkControl.setFirmwareButtonVisibility(true);
 									}
 								}
@@ -154,11 +155,11 @@ namespace TPCASTWindows.UI
 								{
 									this.checkControl.setFirmwareLabel(string.Concat(new string[]
 									{
-										Localization.firmwareVersion,
+										Resources.firmwareVersion,
 										"v",
 										adapterVersion,
 										"(",
-										Localization.alreadyNewest,
+										Resources.alreadyNewest,
 										")"
 									}));
 								}
@@ -166,21 +167,21 @@ namespace TPCASTWindows.UI
 						}
 						if (response.Data.roms.software != null)
 						{
-							UpdateMessage recommend2 = response.Data.roms.software.recommend;
-							if (recommend2 != null)
+							UpdateMessage updateMessage2 = response.Data.roms.software.recommend;
+							if (updateMessage2 != null)
 							{
-								this.updateSoftwareVersionString = recommend2.version;
-								if (new Version(recommend2.version).CompareTo(currentSoftwareVersion) > 0)
+								this.updateSoftwareVersionString = updateMessage2.version;
+								if (new Version(updateMessage2.version).CompareTo(currentSoftwareVersion) > 0)
 								{
-									this.softwareUrl = recommend2.url;
-									this.softwareMd5 = recommend2.md5;
-									if (File.Exists(Constants.updateSoftwareFilePath) && CryptoUtil.GetMD5HashFromFile(Constants.updateSoftwareFilePath).Equals(recommend2.md5))
+									this.softwareUrl = updateMessage2.url;
+									this.softwareMd5 = updateMessage2.md5;
+									if (File.Exists(Constants.updateSoftwareFilePath) && CryptoUtil.GetMD5HashFromFile(Constants.updateSoftwareFilePath).Equals(updateMessage2.md5))
 									{
 										this.isSoftwareDownloaded = true;
 									}
 									if (this.checkControl != null)
 									{
-										this.checkControl.setSoftwareLabel(Localization.softwareVersion + "v" + recommend2.version);
+										this.checkControl.setSoftwareLabel(Resources.softwareVersion + "v" + updateMessage2.version);
 										this.checkControl.setSoftwareButtonVisibility(true);
 										return;
 									}
@@ -189,11 +190,11 @@ namespace TPCASTWindows.UI
 								{
 									this.checkControl.setSoftwareLabel(string.Concat(new string[]
 									{
-										Localization.softwareVersion,
+										Resources.softwareVersion,
 										"v",
 										softwareVersion,
 										"(",
-										Localization.alreadyNewest,
+										Resources.alreadyNewest,
 										")"
 									}));
 									return;
@@ -204,22 +205,23 @@ namespace TPCASTWindows.UI
 				}
 				else
 				{
-					Version version = Assembly.GetExecutingAssembly().GetName().Version;
-					string text = string.Concat(new object[]
+					UpdateDialog.log.Trace("fail to connect internet");
+					Version v = Assembly.GetExecutingAssembly().GetName().Version;
+					string softVersion = string.Concat(new object[]
 					{
-						version.Major,
+						v.Major,
 						".",
-						version.Minor,
+						v.Minor,
 						".",
-						version.Build
+						v.Build
 					});
 					this.checkControl.setSoftwareLabel(string.Concat(new string[]
 					{
-						Localization.softwareVersion,
+						Resources.softwareVersion,
 						"v",
-						text,
+						softVersion,
 						"(",
-						Localization.noInternet,
+						Resources.noInternet,
 						")"
 					}));
 				}
@@ -245,7 +247,7 @@ namespace TPCASTWindows.UI
 		private void showDownloadFirmwareFinish()
 		{
 			this.ShowFirmwareDownloadControl();
-			this.firmwareControl.setMessage(Localization.firmwareDonloadFinish);
+			this.firmwareControl.setMessage(Resources.firmwareDonloadFinish);
 			this.firmwareControl.setProgress(100);
 			this.firmwareControl.setContinueButtonVisble(true);
 		}
@@ -295,7 +297,7 @@ namespace TPCASTWindows.UI
 			expr_17.Flush();
 			expr_17.Close();
 			expr_11.Close();
-			this.softwareControl.setMessage(Localization.softwareDownloadFinish);
+			this.softwareControl.setMessage(Resources.softwareDownloadFinish);
 			this.softwareControl.setProgress(100);
 			this.softwareControl.setContinueButtonVisble(true);
 		}
@@ -306,7 +308,7 @@ namespace TPCASTWindows.UI
 			{
 				if (this.socketModel != null)
 				{
-					this.socketModel.transUpdateMd5(this.adapterMd5);
+					this.socketModel.TransUpdateMd5(this.adapterMd5);
 					return;
 				}
 			}
@@ -322,7 +324,7 @@ namespace TPCASTWindows.UI
 			{
 				if (this.socketModel != null)
 				{
-					this.socketModel.prepareUpdate();
+					this.socketModel.PrepareUpdate();
 					return;
 				}
 			}
@@ -378,8 +380,8 @@ namespace TPCASTWindows.UI
 
 		public void DownloadProgressChanged(object sender, DownloadProgressChangedEventArgs e)
 		{
-			Console.WriteLine("sender = " + ((WebClient)sender).IsBusy.ToString());
-			Console.WriteLine("percent = " + e.ProgressPercentage);
+			UpdateDialog.log.Trace("sender = " + ((WebClient)sender).IsBusy.ToString());
+			UpdateDialog.log.Trace("percent = " + e.ProgressPercentage);
 			if ("adapter".Equals(e.UserState))
 			{
 				if (this.firmwareControl != null && this.isAdapterDownloading)
@@ -396,22 +398,22 @@ namespace TPCASTWindows.UI
 
 		public void DownloadFileCompleted(object sender, AsyncCompletedEventArgs e)
 		{
-			Console.WriteLine("sender = " + sender);
-			Console.WriteLine("UserState = " + e.UserState);
+			UpdateDialog.log.Trace("sender = " + sender);
+			UpdateDialog.log.Trace("UserState = " + e.UserState);
 			if ("adapter".Equals(e.UserState))
 			{
 				this.isAdapterDownloading = false;
 				if (File.Exists(Constants.updateAdapterFilePath))
 				{
-					string mD5HashFromFile = CryptoUtil.GetMD5HashFromFile(Constants.updateAdapterFilePath);
-					if (!this.adapterMd5.Equals(mD5HashFromFile))
+					string md5 = CryptoUtil.GetMD5HashFromFile(Constants.updateAdapterFilePath);
+					if (!this.adapterMd5.Equals(md5))
 					{
 						this.ShowFirmwareDownloadExceptionControl();
 						return;
 					}
 					if (this.firmwareControl != null)
 					{
-						this.firmwareControl.setMessage(Localization.firmwareDonloadFinish);
+						this.firmwareControl.setMessage(Resources.firmwareDonloadFinish);
 						this.firmwareControl.setContinueButtonVisble(true);
 						return;
 					}
@@ -422,12 +424,12 @@ namespace TPCASTWindows.UI
 				this.isSoftwareDownloading = false;
 				if (File.Exists(Constants.updateSoftwareFilePath))
 				{
-					string mD5HashFromFile2 = CryptoUtil.GetMD5HashFromFile(Constants.updateSoftwareFilePath);
-					if (this.softwareMd5.Equals(mD5HashFromFile2))
+					string md6 = CryptoUtil.GetMD5HashFromFile(Constants.updateSoftwareFilePath);
+					if (this.softwareMd5.Equals(md6))
 					{
 						if (this.softwareControl != null)
 						{
-							this.softwareControl.setMessage(Localization.softwareDownloadFinish);
+							this.softwareControl.setMessage(Resources.softwareDownloadFinish);
 							this.softwareControl.setContinueButtonVisble(true);
 							return;
 						}
@@ -442,7 +444,7 @@ namespace TPCASTWindows.UI
 
 		public void DownloadTimeout(object userToken)
 		{
-			Console.WriteLine("userToken = " + userToken);
+			UpdateDialog.log.Trace("userToken = " + userToken);
 			if ("adapter".Equals(userToken))
 			{
 				this.ShowFirmwareDownloadExceptionControl();
@@ -459,7 +461,7 @@ namespace TPCASTWindows.UI
 			this.ShowFirmwareWaitingControl();
 			if (!string.IsNullOrEmpty(this.updateAdapterVersionString) && this.socketModel != null)
 			{
-				this.socketModel.transUpdateVersion(this.updateAdapterVersionString);
+				this.socketModel.TransUpdateVersion(this.updateAdapterVersionString);
 			}
 		}
 
@@ -471,17 +473,17 @@ namespace TPCASTWindows.UI
 		private void ShowUpdateCheckControl()
 		{
 			this.checkControl = new UpdateCheckControl();
-			Version version = Assembly.GetExecutingAssembly().GetName().Version;
-			string str = string.Concat(new object[]
+			Version v = Assembly.GetExecutingAssembly().GetName().Version;
+			string softVersion = string.Concat(new object[]
 			{
-				version.Major,
+				v.Major,
 				".",
-				version.Minor,
+				v.Minor,
 				".",
-				version.Build
+				v.Build
 			});
-			this.checkControl.setFirmwareLabel(Localization.firmwareVersion + "v---");
-			this.checkControl.setSoftwareLabel(Localization.softwareVersion + "v" + str);
+			this.checkControl.setFirmwareLabel(Resources.firmwareVersion + "v---");
+			this.checkControl.setSoftwareLabel(Resources.softwareVersion + "v" + softVersion);
 			this.checkControl.OnOkClick = new UpdateCheckControl.OnOkClickDelegate(this.OnCancelClick);
 			this.checkControl.OnSoftwareClick = new UpdateCheckControl.OnSoftwareClickDelegate(this.updateSoftware);
 			this.checkControl.OnFirmwareClick = new UpdateCheckControl.OnFirmwareClickDelegate(this.updateFirmware);
@@ -499,10 +501,10 @@ namespace TPCASTWindows.UI
 
 		private void ShowSoftwareDownloadExceptionControl()
 		{
-			UpdateSoftwareDownloadExceptionControl updateSoftwareDownloadExceptionControl = new UpdateSoftwareDownloadExceptionControl();
-			updateSoftwareDownloadExceptionControl.OnRetryClick = new UpdateSoftwareDownloadExceptionControl.OnRetryClickDelegate(this.startDownloadSoftware);
+			UpdateSoftwareDownloadExceptionControl downloadExceptionControl = new UpdateSoftwareDownloadExceptionControl();
+			downloadExceptionControl.OnRetryClick = new UpdateSoftwareDownloadExceptionControl.OnRetryClickDelegate(this.startDownloadSoftware);
 			this.dialogGroup.Controls.Clear();
-			this.dialogGroup.Controls.Add(updateSoftwareDownloadExceptionControl);
+			this.dialogGroup.Controls.Add(downloadExceptionControl);
 		}
 
 		private void ShowFirmwareDownloadControl()
@@ -515,34 +517,34 @@ namespace TPCASTWindows.UI
 
 		private void ShowFirmwareDownloadExceptionControl()
 		{
-			UpdateFirmwareDownloadExceptionControl updateFirmwareDownloadExceptionControl = new UpdateFirmwareDownloadExceptionControl();
-			updateFirmwareDownloadExceptionControl.OnRetryClick = new UpdateFirmwareDownloadExceptionControl.OnRetryClickDelegate(this.startDownloadFirmware);
+			UpdateFirmwareDownloadExceptionControl downloadExceptionControl = new UpdateFirmwareDownloadExceptionControl();
+			downloadExceptionControl.OnRetryClick = new UpdateFirmwareDownloadExceptionControl.OnRetryClickDelegate(this.startDownloadFirmware);
 			this.dialogGroup.Controls.Clear();
-			this.dialogGroup.Controls.Add(updateFirmwareDownloadExceptionControl);
+			this.dialogGroup.Controls.Add(downloadExceptionControl);
 		}
 
 		private void ShowFirmwareWaitingControl()
 		{
-			UpdateFirmwareWaitingControl value = new UpdateFirmwareWaitingControl();
+			UpdateFirmwareWaitingControl waitingControl = new UpdateFirmwareWaitingControl();
 			this.dialogGroup.Controls.Clear();
-			this.dialogGroup.Controls.Add(value);
+			this.dialogGroup.Controls.Add(waitingControl);
 		}
 
 		private void ShowFirmwareSuccessControl()
 		{
-			UpdateFirmwareSuccessControl updateFirmwareSuccessControl = new UpdateFirmwareSuccessControl();
-			updateFirmwareSuccessControl.OnOkClick = new UpdateFirmwareSuccessControl.OnOkClickDelegate(this.OnFirmwareUpdateSuccess);
+			UpdateFirmwareSuccessControl successControl = new UpdateFirmwareSuccessControl();
+			successControl.OnOkClick = new UpdateFirmwareSuccessControl.OnOkClickDelegate(this.OnFirmwareUpdateSuccess);
 			this.dialogGroup.Controls.Clear();
-			this.dialogGroup.Controls.Add(updateFirmwareSuccessControl);
+			this.dialogGroup.Controls.Add(successControl);
 		}
 
 		private void ShowFirmwareFailControl()
 		{
-			UpdateFirmwareFailControl updateFirmwareFailControl = new UpdateFirmwareFailControl();
-			updateFirmwareFailControl.OnRetryClick = new UpdateFirmwareFailControl.OnRetryClickDelegate(this.ShowUpdateMessage);
-			updateFirmwareFailControl.OnCancelClick = new UpdateFirmwareFailControl.OnCancelClickDelegate(this.OnCancelClick);
+			UpdateFirmwareFailControl failControl = new UpdateFirmwareFailControl();
+			failControl.OnRetryClick = new UpdateFirmwareFailControl.OnRetryClickDelegate(this.ShowUpdateMessage);
+			failControl.OnCancelClick = new UpdateFirmwareFailControl.OnCancelClickDelegate(this.OnCancelClick);
 			this.dialogGroup.Controls.Clear();
-			this.dialogGroup.Controls.Add(updateFirmwareFailControl);
+			this.dialogGroup.Controls.Add(failControl);
 		}
 
 		private void OnFirmwareUpdateSuccess()
@@ -568,7 +570,6 @@ namespace TPCASTWindows.UI
 				this.socketModel.removeSocketConnectCallback(this);
 				this.socketModel.removeSocketUpdateCallback(this);
 				this.socketModel.removeSocketExceptionCallback(this);
-				this.socketModel.disconnect();
 			}
 		}
 

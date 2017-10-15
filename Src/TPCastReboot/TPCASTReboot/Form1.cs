@@ -56,17 +56,24 @@ namespace TPCASTReboot
 
 		private void checkSoftwareUpdateFile()
 		{
-			if (File.Exists(Constants.updateSoftwareFilePath) && File.Exists(Constants.updateSoftwareMd5Path))
+			string expr_0F = Path.GetTempPath() + "\\TPCAST";
+			string path = expr_0F + "\\UpdateFlag";
+			Directory.CreateDirectory(expr_0F);
+			if (File.Exists(path))
 			{
-				string mD5HashFromFile = CryptoUtil.GetMD5HashFromFile(Constants.updateSoftwareFilePath);
-				StreamReader expr_2D = new StreamReader(Constants.updateSoftwareMd5Path);
-				string text = expr_2D.ReadLine();
-				expr_2D.Close();
-				expr_2D.Dispose();
-				if (text != null && text.Equals(mD5HashFromFile))
+				if (File.Exists(Constants.updateSoftwareFilePath) && File.Exists(Constants.updateSoftwareMd5Path))
 				{
-					RegistryUtil.addAutoRunOnce(Constants.updateSoftwareFilePath);
+					string mD5HashFromFile = CryptoUtil.GetMD5HashFromFile(Constants.updateSoftwareFilePath);
+					StreamReader expr_56 = new StreamReader(Constants.updateSoftwareMd5Path);
+					string text = expr_56.ReadLine();
+					expr_56.Close();
+					expr_56.Dispose();
+					if (text != null && text.Equals(mD5HashFromFile))
+					{
+						RegistryUtil.addAutoRunOnce(Constants.updateSoftwareFilePath);
+					}
 				}
+				File.Delete(path);
 			}
 		}
 

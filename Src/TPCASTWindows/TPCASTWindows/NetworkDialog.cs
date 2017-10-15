@@ -2,13 +2,16 @@ using System;
 using System.ComponentModel;
 using System.Drawing;
 using System.Windows.Forms;
-using TPCASTWindows.Resources;
+using TPCASTWindows.Properties;
+using TPCASTWindows.Utils;
 
 namespace TPCASTWindows
 {
-	public class NetworkDialog : BaseDialogForm
+	public class NetworkDialog : BaseDialogForm, ConnectReloadCallback, SwitchChannelCallback
 	{
 		public delegate void OnBackClickDelegate();
+
+		private ConnectModel connectModel;
 
 		private NetworkDialogWaitControl waitControl;
 
@@ -21,71 +24,78 @@ namespace TPCASTWindows
 		public NetworkDialog()
 		{
 			this.InitializeComponent();
-			Util.OnCheckRouterChannelFinishListener = new Util.OnCheckRouterFinishDelegate(this.CheckRouterFinish);
-			Util.OnChannelSwitched = new Util.OnChannelSwitchedDelegate(this.OnChannelSwitched);
-			Util.OnRouterConnected = new Util.OnRouterConnectedDelegate(this.OnRouterConnected);
-			Util.OnHostConnected = new Util.OnHostConnectedDelegate(this.OnHostConnected);
-			Util.OnControlConnectedError = new Util.OnControlConnectedErrorDelegate(this.OnControlConnectedError);
+			this.connectModel = new ConnectModel(this);
+			this.connectModel.setConnectReloadCallback(this);
+			this.connectModel.setSwitchChannelCallback(this);
+			this.OnCloseClick = new BaseDialogForm.OnCloseClickDelegate(this.OnCloseButtonClick);
 		}
 
 		private void NetworkDialog_Load(object sender, EventArgs e)
 		{
-			NetworkDialogSwitchControl networkDialogSwitchControl = new NetworkDialogSwitchControl();
-			networkDialogSwitchControl.OnSwitchClick = new NetworkDialogSwitchControl.OnSwitchClickDelegate(this.SwitchClick);
+			NetworkDialogSwitchControl switchControl = new NetworkDialogSwitchControl();
+			switchControl.OnSwitchClick = new NetworkDialogSwitchControl.OnSwitchClickDelegate(this.SwitchClick);
 			this.dialogGroup.Controls.Clear();
-			this.dialogGroup.Controls.Add(networkDialogSwitchControl);
+			this.dialogGroup.Controls.Add(switchControl);
 		}
 
 		public void SwitchClick()
 		{
-			this.closeButton.Visible = false;
-			Util.AbortBackgroundCheckControlThread();
 			this.ShowWaitControl();
-			Util.SwitchChannel();
+			if (this.connectModel != null)
+			{
+				this.connectModel.SwitchChannel();
+			}
 		}
 
-		private void CheckRouterFinish(bool isOurRouter)
+		public void OnCheckRouterChannelFinishListener(bool isOurRouter)
 		{
-			ControlDialogRouterControl controlDialogRouterControl = new ControlDialogRouterControl();
-			controlDialogRouterControl.OnRetryClick = new ControlDialogRouterControl.RetryButtonClickDelegate(this.SwitchClick);
+			this.closeButton.Visible = true;
+			ControlDialogRouterControl routerControl = new ControlDialogRouterControl();
+			routerControl.OnRetryClick = new ControlDialogRouterControl.RetryButtonClickDelegate(this.SwitchClick);
 			this.dialogGroup.Controls.Clear();
-			this.dialogGroup.Controls.Add(controlDialogRouterControl);
+			this.dialogGroup.Controls.Add(routerControl);
 		}
 
-		private void OnChannelSwitched()
+		public void OnChannelSwitched()
 		{
 			if (ControlCheckWindow.isAllPass)
 			{
 				if (this.waitControl != null)
 				{
-					this.waitControl.setRouterLabelText(Localization.routerRebootFinish);
-					this.waitControl.setRaspberryLabelText(Localization.raspberryConnecting);
+					this.waitControl.setRouterLabelText(Resources.routerRebootFinish);
+					this.waitControl.setRaspberryLabelText(Resources.raspberryConnecting);
 				}
-				Util.StartHostThread();
-				return;
+				if (this.connectModel != null)
+				{
+					this.connectModel.StartHostThread();
+					return;
+				}
 			}
-			this.ShowSwitchChannelFinishControl();
+			else
+			{
+				this.ShowSwitchChannelFinishControl();
+			}
 		}
 
-		private void OnHostConnected()
+		public void OnRouterConnected()
 		{
 			if (this.waitControl != null)
 			{
-				this.waitControl.setRaspberryLabelText(Localization.RaspberryRebootFinish);
-				this.waitControl.setControlLabelText(Localization.ControlReconnecting);
+				this.waitControl.setRouterLabelText(Resources.routerRebootFinish);
+				this.waitControl.setRaspberryLabelText(Resources.raspberryConnecting);
 			}
 		}
 
-		private void OnRouterConnected()
+		public void OnHostConnected()
 		{
 			if (this.waitControl != null)
 			{
-				this.waitControl.setRouterLabelText(Localization.routerRebootFinish);
-				this.waitControl.setRaspberryLabelText(Localization.raspberryConnecting);
+				this.waitControl.setRaspberryLabelText(Resources.RaspberryRebootFinish);
+				this.waitControl.setControlLabelText(Resources.ControlReconnecting);
 			}
 		}
 
-		private void OnControlConnectedError(int error)
+		public void OnReloadCheckError(int error)
 		{
 			this.ShowControlByStatus(error);
 		}
@@ -123,8 +133,14 @@ namespace TPCASTWindows
 			}
 		}
 
+		public void OnSwitchCheckError(int error)
+		{
+			this.OnReloadCheckError(error);
+		}
+
 		private void ShowWaitControl()
 		{
+			this.closeButton.Visible = false;
 			this.waitControl = new NetworkDialogWaitControl();
 			this.dialogGroup.Controls.Clear();
 			this.dialogGroup.Controls.Add(this.waitControl);
@@ -132,58 +148,69 @@ namespace TPCASTWindows
 
 		private void OnWaitClick()
 		{
-			this.ShowWaitControl();
-			Util.StartCheckControlReloadThread();
+			if (ControlCheckWindow.isAllPass)
+			{
+				this.ShowWaitControl();
+				if (this.connectModel != null)
+				{
+					this.connectModel.StartCheckControlReloadThread();
+					return;
+				}
+			}
+			else
+			{
+				this.SwitchClick();
+			}
 		}
 
 		private void ShowCheckControl()
 		{
-			ControlInterruptCheckControl controlInterruptCheckControl = new ControlInterruptCheckControl();
-			controlInterruptCheckControl.OnWaitClick = new ControlInterruptCheckControl.OnWaitClickDelegate(this.OnWaitClick);
+			ControlInterruptCheckControl checkControl = new ControlInterruptCheckControl();
+			checkControl.OnWaitClick = new ControlInterruptCheckControl.OnWaitClickDelegate(this.OnWaitClick);
 			this.dialogGroup.Controls.Clear();
-			this.dialogGroup.Controls.Add(controlInterruptCheckControl);
+			this.dialogGroup.Controls.Add(checkControl);
 		}
 
 		private void ShowRebootControl()
 		{
-			ControlInterruptRebootControl controlInterruptRebootControl = new ControlInterruptRebootControl();
-			controlInterruptRebootControl.OnOkClick = new ControlInterruptRebootControl.OnOkClickDelegate(this.BackClick);
+			ControlInterruptRebootControl rebootControl = new ControlInterruptRebootControl();
+			rebootControl.OnOkClick = new ControlInterruptRebootControl.OnOkClickDelegate(this.BackClick);
 			this.dialogGroup.Controls.Clear();
-			this.dialogGroup.Controls.Add(controlInterruptRebootControl);
+			this.dialogGroup.Controls.Add(rebootControl);
 		}
 
 		private void ShowRouterControl()
 		{
-			ControlInterruptRouterControl controlInterruptRouterControl = new ControlInterruptRouterControl();
-			controlInterruptRouterControl.OnWaitClick = new ControlInterruptRouterControl.OnWaitClickDelegate(this.OnWaitClick);
-			controlInterruptRouterControl.OnBackClick = new ControlInterruptRouterControl.OnBackClickDelegate(this.BackClick);
+			ControlInterruptRouterControl routerControl = new ControlInterruptRouterControl();
+			routerControl.OnWaitClick = new ControlInterruptRouterControl.OnWaitClickDelegate(this.OnWaitClick);
+			routerControl.OnBackClick = new ControlInterruptRouterControl.OnBackClickDelegate(this.BackClick);
 			this.dialogGroup.Controls.Clear();
-			this.dialogGroup.Controls.Add(controlInterruptRouterControl);
+			this.dialogGroup.Controls.Add(routerControl);
 		}
 
 		private void ShowRaspberryControl()
 		{
-			ControlInterruptRaspberryControl controlInterruptRaspberryControl = new ControlInterruptRaspberryControl();
-			controlInterruptRaspberryControl.OnWaitClick = new ControlInterruptRaspberryControl.OnWaitClickDelegate(this.OnWaitClick);
-			controlInterruptRaspberryControl.OnBackClick = new ControlInterruptRaspberryControl.OnBackClickDelegate(this.BackClick);
+			ControlInterruptRaspberryControl raspberryControl = new ControlInterruptRaspberryControl();
+			raspberryControl.OnWaitClick = new ControlInterruptRaspberryControl.OnWaitClickDelegate(this.OnWaitClick);
+			raspberryControl.OnBackClick = new ControlInterruptRaspberryControl.OnBackClickDelegate(this.BackClick);
 			this.dialogGroup.Controls.Clear();
-			this.dialogGroup.Controls.Add(controlInterruptRaspberryControl);
+			this.dialogGroup.Controls.Add(raspberryControl);
 		}
 
 		private void ShowCableControl()
 		{
-			ControlInterruptCableControl controlInterruptCableControl = new ControlInterruptCableControl();
-			controlInterruptCableControl.OnRetry = new ControlInterruptCableControl.OnRetryDelegate(this.OnWaitClick);
+			ControlInterruptCableControl cableControl = new ControlInterruptCableControl();
+			cableControl.OnRetry = new ControlInterruptCableControl.OnRetryDelegate(this.OnWaitClick);
 			this.dialogGroup.Controls.Clear();
-			this.dialogGroup.Controls.Add(controlInterruptCableControl);
+			this.dialogGroup.Controls.Add(cableControl);
 		}
 
 		private void ShowSwitchChannelFinishControl()
 		{
-			NetworkDialogFinishControl networkDialogFinishControl = new NetworkDialogFinishControl();
-			networkDialogFinishControl.OnOkClick = new NetworkDialogFinishControl.OnOkClickDelegate(this.OnOkClick);
+			NetworkDialogFinishControl finishControl = new NetworkDialogFinishControl();
+			finishControl.OnOkClick = new NetworkDialogFinishControl.OnOkClickDelegate(this.OnOkClick);
 			this.dialogGroup.Controls.Clear();
-			this.dialogGroup.Controls.Add(networkDialogFinishControl);
+			this.dialogGroup.Controls.Add(finishControl);
 		}
 
 		private void OnOkClick()
@@ -192,20 +219,32 @@ namespace TPCASTWindows
 			base.Dispose();
 			if (ControlCheckWindow.isAllPass)
 			{
-				Util.ConnectAnimateionResume();
-				Util.StartBackgroundCheckControlThread();
+				AnimationModel.ConnectAnimateionResume();
+				LoopCheckModel.StartBackgroundCheckControlThread();
 			}
 		}
 
 		private void BackClick()
 		{
-			Util.AbortBackgroundCheckControlThread();
-			Util.AbortCheckControlReloadThread();
+			LoopCheckModel.AbortBackgroundCheckControlThread();
+			if (this.connectModel != null)
+			{
+				this.connectModel.AbortCheckControlReloadThread();
+			}
 			base.Close();
 			base.Dispose();
 			if (this.OnBackClick != null)
 			{
 				this.OnBackClick();
+			}
+		}
+
+		private void OnCloseButtonClick()
+		{
+			if (ControlCheckWindow.isAllPass)
+			{
+				AnimationModel.ConnectAnimateionResume();
+				LoopCheckModel.StartBackgroundCheckControlThread();
 			}
 		}
 

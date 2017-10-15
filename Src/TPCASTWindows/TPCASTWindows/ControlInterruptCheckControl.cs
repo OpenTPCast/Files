@@ -47,31 +47,31 @@ namespace TPCASTWindows
 		private void InitializeComponent()
 		{
 			this.components = new Container();
-			ComponentResourceManager arg_5D_0 = new ComponentResourceManager(typeof(ControlInterruptCheckControl));
+			ComponentResourceManager arg_7C_0 = new ComponentResourceManager(typeof(ControlInterruptCheckControl));
 			this.label1 = new Label();
 			this.waitButton = new Button();
 			this.pictureBox1 = new PictureBox();
 			this.customLabel2 = new CustomLabel(this.components);
 			((ISupportInitialize)this.pictureBox1).BeginInit();
 			base.SuspendLayout();
-			arg_5D_0.ApplyResources(this.label1, "label1");
 			this.label1.BackColor = Color.FromArgb(216, 216, 216);
+			arg_7C_0.ApplyResources(this.label1, "label1");
 			this.label1.Name = "label1";
-			arg_5D_0.ApplyResources(this.waitButton, "waitButton");
 			this.waitButton.BackgroundImage = Resources.blue_background_1;
+			arg_7C_0.ApplyResources(this.waitButton, "waitButton");
 			this.waitButton.FlatAppearance.BorderSize = 0;
 			this.waitButton.ForeColor = Color.White;
 			this.waitButton.Name = "waitButton";
 			this.waitButton.UseVisualStyleBackColor = false;
 			this.waitButton.Click += new EventHandler(this.waitButton_Click);
-			arg_5D_0.ApplyResources(this.pictureBox1, "pictureBox1");
 			this.pictureBox1.Image = Resources.exception;
+			arg_7C_0.ApplyResources(this.pictureBox1, "pictureBox1");
 			this.pictureBox1.Name = "pictureBox1";
 			this.pictureBox1.TabStop = false;
-			arg_5D_0.ApplyResources(this.customLabel2, "customLabel2");
+			arg_7C_0.ApplyResources(this.customLabel2, "customLabel2");
 			this.customLabel2.LineDistance = 3;
 			this.customLabel2.Name = "customLabel2";
-			arg_5D_0.ApplyResources(this, "$this");
+			arg_7C_0.ApplyResources(this, "$this");
 			base.AutoScaleMode = AutoScaleMode.Font;
 			this.BackColor = Color.White;
 			base.Controls.Add(this.customLabel2);

@@ -1,3 +1,4 @@
+using NLog;
 using System;
 using System.Net.NetworkInformation;
 using System.Runtime.InteropServices;
@@ -9,6 +10,8 @@ namespace TPCASTWindows
 	internal class NetworkUtil
 	{
 		public delegate void OnNetworkConnectedDelegate(bool connected);
+
+		private static Logger log = LogManager.GetCurrentClassLogger();
 
 		public static Control sContext;
 
@@ -46,43 +49,43 @@ namespace TPCASTWindows
 
 		public static bool isLanNetworkConnected()
 		{
-			int num = 0;
-			bool expr_05 = NetworkUtil.InternetGetConnectedState(out num, 0);
-			Console.WriteLine("net state = " + num);
-			if ((num & 64) != 0)
+			int flag = 0;
+			bool expr_05 = NetworkUtil.InternetGetConnectedState(out flag, 0);
+			NetworkUtil.log.Trace("net state = " + flag);
+			if ((flag & 64) != 0)
 			{
-				Console.WriteLine("configured");
+				NetworkUtil.log.Trace("configured");
 			}
 			else
 			{
-				Console.WriteLine("configured no");
+				NetworkUtil.log.Trace("configured no");
 			}
-			if ((num & 2) != 0)
+			if ((flag & 2) != 0)
 			{
-				Console.WriteLine("lan");
+				NetworkUtil.log.Trace("lan");
 			}
-			if ((num & 1) != 0)
+			if ((flag & 1) != 0)
 			{
-				Console.WriteLine("modem");
+				NetworkUtil.log.Trace("modem");
 			}
-			if ((num & 8) != 0)
+			if ((flag & 8) != 0)
 			{
-				Console.WriteLine("modem busy");
+				NetworkUtil.log.Trace("modem busy");
 			}
-			if ((num & 32) != 0)
+			if ((flag & 32) != 0)
 			{
-				Console.WriteLine("offline");
+				NetworkUtil.log.Trace("offline");
 			}
-			if ((num & 4) != 0)
+			if ((flag & 4) != 0)
 			{
-				Console.WriteLine("proxy");
+				NetworkUtil.log.Trace("proxy");
 			}
-			if ((num & 16) != 0)
+			if ((flag & 16) != 0)
 			{
-				Console.WriteLine("ras");
+				NetworkUtil.log.Trace("ras");
 				return expr_05;
 			}
-			Console.WriteLine("ras no");
+			NetworkUtil.log.Trace("ras no");
 			return expr_05;
 		}
 
@@ -95,43 +98,43 @@ namespace TPCASTWindows
 		{
 			if (obj is NetworkUtil.OnNetworkConnectedDelegate)
 			{
-				NetworkUtil.OnNetworkConnectedDelegate onNetworkConnectedDelegate = (NetworkUtil.OnNetworkConnectedDelegate)obj;
+				NetworkUtil.OnNetworkConnectedDelegate OnNetworkConnected = (NetworkUtil.OnNetworkConnectedDelegate)obj;
 				try
 				{
 					if (new Ping().Send("www.baidu.com", 1000).Status == IPStatus.Success)
 					{
-						if (NetworkUtil.sContext != null && onNetworkConnectedDelegate != null)
+						if (NetworkUtil.sContext != null && OnNetworkConnected != null)
 						{
 							if (NetworkUtil.sContext.InvokeRequired)
 							{
-								NetworkUtil.sContext.Invoke(onNetworkConnectedDelegate, new object[]
+								NetworkUtil.sContext.Invoke(OnNetworkConnected, new object[]
 								{
 									true
 								});
 							}
 							else
 							{
-								onNetworkConnectedDelegate(true);
+								OnNetworkConnected(true);
 							}
 						}
 						return;
 					}
 				}
-				catch (Exception arg)
+				catch (Exception e)
 				{
-					Console.WriteLine("e = " + arg);
+					NetworkUtil.log.Error("pingThreadStart = " + e.Message + "\r\n" + e.StackTrace);
 				}
-				if (NetworkUtil.sContext != null && onNetworkConnectedDelegate != null)
+				if (NetworkUtil.sContext != null && OnNetworkConnected != null)
 				{
 					if (NetworkUtil.sContext.InvokeRequired)
 					{
-						NetworkUtil.sContext.Invoke(onNetworkConnectedDelegate, new object[]
+						NetworkUtil.sContext.Invoke(OnNetworkConnected, new object[]
 						{
 							false
 						});
 						return;
 					}
-					onNetworkConnectedDelegate(false);
+					OnNetworkConnected(false);
 				}
 			}
 		}

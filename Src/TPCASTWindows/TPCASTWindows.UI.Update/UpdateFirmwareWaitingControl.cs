@@ -39,8 +39,8 @@ namespace TPCASTWindows.UI.Update
 			arg_47_0.ApplyResources(this.customLabel1, "customLabel1");
 			this.customLabel1.LineDistance = 3;
 			this.customLabel1.Name = "customLabel1";
-			arg_47_0.ApplyResources(this.pictureBox2, "pictureBox2");
 			this.pictureBox2.Image = Resources.waiting;
+			arg_47_0.ApplyResources(this.pictureBox2, "pictureBox2");
 			this.pictureBox2.Name = "pictureBox2";
 			this.pictureBox2.TabStop = false;
 			arg_47_0.ApplyResources(this, "$this");

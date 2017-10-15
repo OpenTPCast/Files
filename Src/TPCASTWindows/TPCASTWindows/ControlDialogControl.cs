@@ -3,7 +3,6 @@ using System.ComponentModel;
 using System.Drawing;
 using System.Windows.Forms;
 using TPCASTWindows.Properties;
-using TPCASTWindows.Resources;
 
 namespace TPCASTWindows
 {
@@ -34,7 +33,7 @@ namespace TPCASTWindows
 		public ControlDialogControl()
 		{
 			this.InitializeComponent();
-			this.pictureBox2.Image = LocalizeUtil.getImageFromResource(Localization.battery);
+			this.pictureBox2.Image = Resources.battery;
 		}
 
 		private void offButton_Click(object sender, EventArgs e)
@@ -65,7 +64,7 @@ namespace TPCASTWindows
 		private void InitializeComponent()
 		{
 			this.components = new Container();
-			ComponentResourceManager arg_7E_0 = new ComponentResourceManager(typeof(ControlDialogControl));
+			ComponentResourceManager arg_9D_0 = new ComponentResourceManager(typeof(ControlDialogControl));
 			this.label2 = new Label();
 			this.customLabel1 = new CustomLabel(this.components);
 			this.pictureBox2 = new PictureBox();
@@ -75,34 +74,34 @@ namespace TPCASTWindows
 			((ISupportInitialize)this.pictureBox2).BeginInit();
 			((ISupportInitialize)this.pictureBox1).BeginInit();
 			base.SuspendLayout();
-			arg_7E_0.ApplyResources(this.label2, "label2");
 			this.label2.BackColor = Color.FromArgb(216, 216, 216);
+			arg_9D_0.ApplyResources(this.label2, "label2");
 			this.label2.Name = "label2";
-			arg_7E_0.ApplyResources(this.customLabel1, "customLabel1");
+			arg_9D_0.ApplyResources(this.customLabel1, "customLabel1");
 			this.customLabel1.LineDistance = 1;
 			this.customLabel1.Name = "customLabel1";
-			arg_7E_0.ApplyResources(this.pictureBox2, "pictureBox2");
+			arg_9D_0.ApplyResources(this.pictureBox2, "pictureBox2");
 			this.pictureBox2.Name = "pictureBox2";
 			this.pictureBox2.TabStop = false;
-			arg_7E_0.ApplyResources(this.pictureBox1, "pictureBox1");
 			this.pictureBox1.Image = Resources.control_exception;
+			arg_9D_0.ApplyResources(this.pictureBox1, "pictureBox1");
 			this.pictureBox1.Name = "pictureBox1";
 			this.pictureBox1.TabStop = false;
-			arg_7E_0.ApplyResources(this.flashingButton, "flashingButton");
 			this.flashingButton.BackgroundImage = Resources.flashing;
+			arg_9D_0.ApplyResources(this.flashingButton, "flashingButton");
 			this.flashingButton.FlatAppearance.BorderSize = 0;
 			this.flashingButton.ForeColor = Color.FromArgb(102, 102, 102);
 			this.flashingButton.Name = "flashingButton";
 			this.flashingButton.UseVisualStyleBackColor = true;
 			this.flashingButton.Click += new EventHandler(this.flashingButton_Click);
-			arg_7E_0.ApplyResources(this.offButton, "offButton");
 			this.offButton.BackgroundImage = Resources.off;
+			arg_9D_0.ApplyResources(this.offButton, "offButton");
 			this.offButton.FlatAppearance.BorderSize = 0;
 			this.offButton.ForeColor = Color.FromArgb(102, 102, 102);
 			this.offButton.Name = "offButton";
 			this.offButton.UseVisualStyleBackColor = true;
 			this.offButton.Click += new EventHandler(this.offButton_Click);
-			arg_7E_0.ApplyResources(this, "$this");
+			arg_9D_0.ApplyResources(this, "$this");
 			base.AutoScaleMode = AutoScaleMode.Font;
 			this.BackColor = Color.White;
 			base.Controls.Add(this.customLabel1);

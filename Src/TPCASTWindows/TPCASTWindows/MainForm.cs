@@ -1,20 +1,26 @@
+using NLog;
 using System;
 using System.ComponentModel;
 using System.Threading;
 using System.Timers;
 using System.Windows.Forms;
 using TPCASTWindows.Properties;
-using TPCASTWindows.Resources;
+using TPCASTWindows.UI.Main;
+using TPCASTWindows.Utils;
 
 namespace TPCASTWindows
 {
-	public class MainForm : BaseForm
+	public class MainForm : BaseForm, ConnectLoopInterruptCallback
 	{
 		public delegate void OnTimerFinishDelegate();
+
+		private static Logger log = LogManager.GetCurrentClassLogger();
 
 		private CheckWindow checkWindow;
 
 		public MainForm.OnTimerFinishDelegate OnTimerFinishListener;
+
+		private ConnectWindowGenTwo connectWindowGenTwo;
 
 		private ControlCheckWindow controlCheckWindow;
 
@@ -32,21 +38,23 @@ namespace TPCASTWindows
 		{
 			this.InitializeComponent();
 			Util.Init(this);
+			ConfigureUtil.init(this);
 			Client.init(this);
 			NetworkUtil.Init(this);
+			LoopCheckModel.Init(this);
 			ThreadPool.RegisterWaitForSingleObject(Program.ProgramStarted, new WaitOrTimerCallback(this.OnProgramStarted), null, -1, false);
-			string launch_background = Localization.launch_background;
-			this.backgroundImage.Image = LocalizeUtil.getImageFromResource(launch_background);
+			this.appLabel.Text = Resources.titleText;
 			this.backgroundImage.SizeMode = PictureBoxSizeMode.StretchImage;
-			this.backgroundImage.BringToFront();
-			System.Timers.Timer expr_74 = new System.Timers.Timer(2000.0);
-			expr_74.Elapsed += new ElapsedEventHandler(this.dismissBackgroundImage);
-			expr_74.AutoReset = false;
-			expr_74.Enabled = true;
+			this.backgroundImagePanel.BringToFront();
+			System.Timers.Timer expr_79 = new System.Timers.Timer(2000.0);
+			expr_79.Elapsed += new ElapsedEventHandler(this.dismissBackgroundImage);
+			expr_79.AutoReset = false;
+			expr_79.Enabled = true;
 			this.OnTimerFinishListener = new MainForm.OnTimerFinishDelegate(this.OnTimerFinish);
-			Util.OnControlInterrupt = new Util.OnControlInterruptDelegate(this.ControlInterrupt);
+			LoopCheckModel.setConnectLoopInterruptCallback(this);
 			this.OnRecommendedUpdateClick = new BaseForm.OnRecommendedUpdateClickDelegate(this.recommendedUpdateClick);
 			this.OnUpdateDialogClose = new BaseForm.OnUpdateDialogCloseDelegate(this.updateDialogClose);
+			this.OnNetworkDialogBackClick = new BaseForm.OnNetworkDialogBackClickDelegate(this.ShowControlCheckWindow);
 			this.ShowControlCheckWindow();
 		}
 
@@ -82,42 +90,46 @@ namespace TPCASTWindows
 
 		public void OnTimerFinish()
 		{
-			this.backgroundImage.Visible = false;
-			this.showGuideDialog();
-		}
-
-		private void showGuideDialog()
-		{
-			if (Settings.Default.showGuideDialog)
+			MainForm.log.Trace("OnTimerFinish");
+			this.backgroundImagePanel.Visible = false;
+			if (this.controlCheckWindow != null)
 			{
-				GuideDialog expr_11 = new GuideDialog();
-				expr_11.OnCloseClick = new BaseDialogForm.OnCloseClickDelegate(this.OnCloseClick);
-				Util.showGrayBackground();
-				expr_11.ShowDialog(this);
+				this.controlCheckWindow.OnSplashImageInvisible();
 			}
-		}
-
-		private void OnCloseClick()
-		{
-			Settings.Default.showGuideDialog = false;
-			Settings.Default.Save();
+			if (this.connectWindowGenTwo != null)
+			{
+				this.connectWindowGenTwo.OnSplashImageInvisible();
+			}
 		}
 
 		public void displayGuideImage()
 		{
 			if (Settings.Default.displayGuide)
 			{
-				string guide_image = Localization.guide_image;
-				this.guideImage.Image = LocalizeUtil.getImageFromResource(guide_image);
-				this.guideImage.SizeMode = PictureBoxSizeMode.StretchImage;
-				this.guideImage.BringToFront();
-				this.guideImage.Visible = true;
+				Util.showGuideForm();
 			}
+		}
+
+		public void ShowWindowGenTwo()
+		{
+			if (this.connectWindowGenTwo == null)
+			{
+				this.connectWindowGenTwo = new ConnectWindowGenTwo();
+			}
+			this.connectWindowGenTwo.initView();
+			this.connectWindowGenTwo.OnControlSuccess = new ConnectWindowGenTwo.OnControlSuccessDelegate(this.displayGuideImage);
+			ConnectWindowGenTwo.isAllPass = false;
+			this.windowGroup.Controls.Clear();
+			this.windowGroup.Controls.Add(this.connectWindowGenTwo);
 		}
 
 		public void ShowControlCheckWindow()
 		{
-			this.controlCheckWindow = new ControlCheckWindow();
+			if (this.controlCheckWindow == null)
+			{
+				this.controlCheckWindow = new ControlCheckWindow();
+			}
+			this.controlCheckWindow.initView();
 			this.controlCheckWindow.OnControlSuccess = new ControlCheckWindow.OnControlSuccessDelegate(this.displayGuideImage);
 			ControlCheckWindow.isAllPass = false;
 			this.windowGroup.Controls.Clear();
@@ -148,13 +160,13 @@ namespace TPCASTWindows
 			this.windowGroup.Controls.Add(this.connectWindow);
 		}
 
-		private void ControlInterrupt(int status)
+		public void OnControlInterrupt(int status)
 		{
+			Util.showGrayBackground();
 			this.interruptDialog = new ControlInterruptDialog();
 			this.interruptDialog.status = status;
 			this.interruptDialog.OnBackClick = new ControlInterruptDialog.OnBackClickDelegate(this.ShowControlCheckWindow);
-			Util.showGrayBackground();
-			this.interruptDialog.ShowDialog(this);
+			this.interruptDialog.Show(Util.sContext);
 		}
 
 		private void recommendedUpdateClick()
@@ -163,6 +175,10 @@ namespace TPCASTWindows
 			{
 				this.controlCheckWindow.removeSocketCallback();
 			}
+			if (this.connectWindowGenTwo != null)
+			{
+				this.connectWindowGenTwo.removeSocketCallback();
+			}
 		}
 
 		private void updateDialogClose()
@@ -170,6 +186,10 @@ namespace TPCASTWindows
 			if (this.controlCheckWindow != null)
 			{
 				this.controlCheckWindow.addSocketCallback();
+			}
+			if (this.connectWindowGenTwo != null)
+			{
+				this.connectWindowGenTwo.addSocketCallback();
 			}
 		}
 
@@ -191,11 +211,38 @@ namespace TPCASTWindows
 
 		private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
 		{
-			Console.WriteLine("MainForm_FormClosing");
+			MainForm.log.Trace("MainForm_FormClosing");
+			if (this.controlCheckWindow != null)
+			{
+				this.controlCheckWindow.OnFormClosing();
+			}
 			if (this.connectWindow != null)
 			{
 				this.connectWindow.CloseControl();
 			}
+			if (this.connectWindowGenTwo != null)
+			{
+				this.connectWindowGenTwo.OnFormClosing();
+			}
+		}
+
+		private void MainForm_Shown(object sender, EventArgs e)
+		{
+			MainForm.log.Trace("MainForm_Shown");
+			if (this.controlCheckWindow != null)
+			{
+				this.controlCheckWindow.MainFormShown();
+			}
+			if (this.connectWindowGenTwo != null)
+			{
+				this.connectWindowGenTwo.MainFormShown();
+			}
+		}
+
+		private void MainForm_KeyDown(object sender, KeyEventArgs e)
+		{
+			MainForm.log.Trace("MainForm_KeyDown kc = " + e.KeyCode);
+			MainForm.log.Trace("MainForm_KeyDown m = " + e.Modifiers);
 		}
 
 		protected override void Dispose(bool disposing)
@@ -209,32 +256,34 @@ namespace TPCASTWindows
 
 		private void InitializeComponent()
 		{
-			ComponentResourceManager arg_4C_0 = new ComponentResourceManager(typeof(MainForm));
+			ComponentResourceManager arg_57_0 = new ComponentResourceManager(typeof(MainForm));
 			this.windowGroup = new GroupBox();
 			this.pictureBox2 = new PictureBox();
 			((ISupportInitialize)this.backgroundImage).BeginInit();
 			((ISupportInitialize)this.guideImage).BeginInit();
+			this.backgroundImagePanel.SuspendLayout();
 			((ISupportInitialize)this.pictureBox2).BeginInit();
 			base.SuspendLayout();
-			arg_4C_0.ApplyResources(this.backgroundImage, "backgroundImage");
-			arg_4C_0.ApplyResources(this.guideImage, "guideImage");
-			arg_4C_0.ApplyResources(this.windowGroup, "windowGroup");
+			arg_57_0.ApplyResources(this.windowGroup, "windowGroup");
 			this.windowGroup.Name = "windowGroup";
 			this.windowGroup.TabStop = false;
-			arg_4C_0.ApplyResources(this.pictureBox2, "pictureBox2");
 			this.pictureBox2.Image = Resources.launch_background;
+			arg_57_0.ApplyResources(this.pictureBox2, "pictureBox2");
 			this.pictureBox2.Name = "pictureBox2";
 			this.pictureBox2.TabStop = false;
-			arg_4C_0.ApplyResources(this, "$this");
+			arg_57_0.ApplyResources(this, "$this");
 			base.Controls.Add(this.windowGroup);
 			base.Name = "MainForm";
 			base.FormClosing += new FormClosingEventHandler(this.MainForm_FormClosing);
 			base.Load += new EventHandler(this.MainForm_Load);
+			base.Shown += new EventHandler(this.MainForm_Shown);
+			base.KeyDown += new KeyEventHandler(this.MainForm_KeyDown);
+			base.Controls.SetChildIndex(this.backgroundImagePanel, 0);
 			base.Controls.SetChildIndex(this.guideImage, 0);
-			base.Controls.SetChildIndex(this.backgroundImage, 0);
 			base.Controls.SetChildIndex(this.windowGroup, 0);
 			((ISupportInitialize)this.backgroundImage).EndInit();
 			((ISupportInitialize)this.guideImage).EndInit();
+			this.backgroundImagePanel.ResumeLayout(false);
 			((ISupportInitialize)this.pictureBox2).EndInit();
 			base.ResumeLayout(false);
 		}

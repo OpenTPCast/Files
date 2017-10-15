@@ -1,3 +1,4 @@
+using NLog;
 using RestSharp;
 using System;
 using System.Windows.Forms;
@@ -8,11 +9,13 @@ namespace TPCASTWindows
 	{
 		public delegate void UpdateResponseDelegate(IRestResponse<Update> response);
 
+		private static Logger log = LogManager.GetCurrentClassLogger();
+
 		private static readonly Client instance = new Client();
 
 		private static Control sContext;
 
-		private const string baseUrl = "http://192.168.60.106:7070";
+		private const string baseUrl = "http://114.215.220.124:7070";
 
 		private Client()
 		{
@@ -30,31 +33,44 @@ namespace TPCASTWindows
 
 		public void requestUpdate(string softwareVersion, string adapterVersion, string sn, Client.UpdateResponseDelegate UpdateResponse)
 		{
-			RestClient client = new RestClient("http://192.168.60.106:7070");
-			RestRequest restRequest = new RestRequest("service/update", Method.GET);
-			restRequest.AddParameter("sv", softwareVersion);
-			restRequest.AddParameter("av", adapterVersion);
-			restRequest.AddParameter("sn", sn);
-			Console.WriteLine(string.Concat(new string[]
+			RestClient client = new RestClient("http://114.215.220.124:7070");
+			client.Timeout = 1000;
+			RestRequest request = new RestRequest("service/update", Method.GET);
+			request.AddParameter("sv", softwareVersion);
+			request.AddParameter("av", adapterVersion);
+			request.AddParameter("sn", sn);
+			string vt = "CE";
+			request.AddParameter("vt", vt);
+			Client.log.Trace(string.Concat(new string[]
 			{
-				"http://192.168.60.106:7070/service/update?sv=",
+				"http://114.215.220.124:7070/service/update?sv=",
 				softwareVersion,
 				"&av=",
 				adapterVersion,
 				"&sn=",
-				sn
+				sn,
+				"&vt=",
+				vt
 			}));
-			client.ExecuteAsync(restRequest, delegate(IRestResponse<Update> callback)
+			client.ExecuteAsync(request, delegate(IRestResponse<Update> callback)
 			{
 				if (Client.sContext != null && UpdateResponse != null)
 				{
 					if (Client.sContext.InvokeRequired)
 					{
-						Client.sContext.Invoke(UpdateResponse, new object[]
+						try
 						{
-							callback
-						});
-						return;
+							Client.sContext.Invoke(UpdateResponse, new object[]
+							{
+								callback
+							});
+							return;
+						}
+						catch (Exception e)
+						{
+							Client.log.Trace("error = = " + e.Message + e.StackTrace);
+							return;
+						}
 					}
 					UpdateResponse(callback);
 				}

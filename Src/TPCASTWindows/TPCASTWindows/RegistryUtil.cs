@@ -1,4 +1,5 @@
 using Microsoft.Win32;
+using NLog;
 using System;
 using System.Diagnostics;
 using System.Linq;
@@ -8,16 +9,18 @@ namespace TPCASTWindows
 {
 	internal class RegistryUtil
 	{
+		private static Logger log = LogManager.GetCurrentClassLogger();
+
 		public static void addAutoRunOnce(string fullPath)
 		{
-			using (RegistryKey registryKey = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64))
+			using (RegistryKey localMachine64 = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64))
 			{
-				using (RegistryKey registryKey2 = registryKey.OpenSubKey("SOFTWARE\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\RunOnce", RegistryKeyPermissionCheck.ReadWriteSubTree, RegistryRights.FullControl))
+				using (RegistryKey key = localMachine64.OpenSubKey("SOFTWARE\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\RunOnce", RegistryKeyPermissionCheck.ReadWriteSubTree, RegistryRights.FullControl))
 				{
-					if (registryKey2 != null)
+					if (key != null)
 					{
-						Console.WriteLine("key = " + registryKey2);
-						registryKey2.SetValue("TPCASTUpdate", fullPath, RegistryValueKind.String);
+						RegistryUtil.log.Trace("key = " + key);
+						key.SetValue("TPCASTUpdate", fullPath, RegistryValueKind.String);
 					}
 				}
 			}
@@ -25,16 +28,16 @@ namespace TPCASTWindows
 
 		public static void removeAutoRunOnce()
 		{
-			using (RegistryKey registryKey = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64))
+			using (RegistryKey localMachine64 = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64))
 			{
-				using (RegistryKey registryKey2 = registryKey.OpenSubKey("SOFTWARE\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\RunOnce", RegistryKeyPermissionCheck.ReadWriteSubTree, RegistryRights.FullControl))
+				using (RegistryKey key = localMachine64.OpenSubKey("SOFTWARE\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\RunOnce", RegistryKeyPermissionCheck.ReadWriteSubTree, RegistryRights.FullControl))
 				{
-					if (registryKey2 != null)
+					if (key != null)
 					{
-						Console.WriteLine("key = " + registryKey2);
-						if (registryKey2.GetValue("TPCASTUpdate") != null)
+						RegistryUtil.log.Trace("key = " + key);
+						if (key.GetValue("TPCASTUpdate") != null)
 						{
-							registryKey2.DeleteValue("TPCASTUpdate");
+							key.DeleteValue("TPCASTUpdate");
 						}
 					}
 				}
@@ -43,34 +46,36 @@ namespace TPCASTWindows
 
 		public static void UninstallTPCAST()
 		{
-			string text = RegistryUtil.findTPCASTCode();
-			Console.WriteLine("code = " + text);
-			if (text != null)
+			string code = RegistryUtil.findTPCASTCode();
+			RegistryUtil.log.Trace("code = " + code);
+			if (code != null)
 			{
-				RegistryUtil.UninstallTPCASTCommand(text);
+				RegistryUtil.invokeUninstallTPCASTCommand(code);
 			}
 		}
 
 		private static string findTPCASTCode()
 		{
-			using (RegistryKey registryKey = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64))
+			using (RegistryKey localMachine64 = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64))
 			{
-				using (RegistryKey registryKey2 = registryKey.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall"))
+				using (RegistryKey key = localMachine64.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall"))
 				{
-					if (registryKey2 != null)
+					if (key != null)
 					{
-						string[] subKeyNames = registryKey2.GetSubKeyNames();
+						string[] subKeyNames = key.GetSubKeyNames();
 						for (int i = 0; i < subKeyNames.Length; i++)
 						{
 							string name = subKeyNames[i];
-							using (RegistryKey registryKey3 = registryKey2.OpenSubKey(name, false))
+							using (RegistryKey key2 = key.OpenSubKey(name, false))
 							{
-								if (registryKey3 != null)
+								if (key2 != null)
 								{
-									string value = registryKey3.GetValue("URLInfoAbout", "").ToString();
-									if ("www.tpcast.cn".Equals(value))
+									string URLInfoAbout = key2.GetValue("URLInfoAbout", "").ToString();
+									string ProductType = key2.GetValue("ProductType", "").ToString();
+									string type = "CE";
+									if ("www.tpcast.cn".Equals(URLInfoAbout) && type.Equals(ProductType))
 									{
-										return registryKey3.Name.Split(new string[]
+										return key2.Name.Split(new string[]
 										{
 											"\\"
 										}, StringSplitOptions.None).Last<string>();
@@ -87,8 +92,23 @@ namespace TPCASTWindows
 		private static void UninstallTPCASTCommand(string code)
 		{
 			Process expr_05 = new Process();
-			expr_05.StartInfo.FileName = "C:\\Windows\\System32\\msiexec.exe";
+			expr_05.StartInfo.FileName = Environment.GetFolderPath(Environment.SpecialFolder.System) + "\\msiexec.exe";
 			expr_05.StartInfo.Arguments = "/x " + code + " /qb";
+			expr_05.StartInfo.WorkingDirectory = ".";
+			expr_05.StartInfo.UseShellExecute = false;
+			expr_05.StartInfo.RedirectStandardInput = true;
+			expr_05.StartInfo.RedirectStandardOutput = true;
+			expr_05.StartInfo.RedirectStandardError = true;
+			expr_05.StartInfo.CreateNoWindow = true;
+			expr_05.Start();
+			expr_05.Close();
+		}
+
+		private static void invokeUninstallTPCASTCommand(string code)
+		{
+			Process expr_05 = new Process();
+			expr_05.StartInfo.FileName = "TPCASTUpdateHelper.exe";
+			expr_05.StartInfo.Arguments = "uninstall " + code;
 			expr_05.StartInfo.WorkingDirectory = ".";
 			expr_05.StartInfo.UseShellExecute = false;
 			expr_05.StartInfo.RedirectStandardInput = true;

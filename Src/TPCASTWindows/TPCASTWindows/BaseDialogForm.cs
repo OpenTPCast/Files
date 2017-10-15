@@ -1,14 +1,18 @@
+using NLog;
 using System;
 using System.ComponentModel;
 using System.Drawing;
 using System.Windows.Forms;
 using TPCASTWindows.Properties;
+using TPCASTWindows.Utils;
 
 namespace TPCASTWindows
 {
 	public class BaseDialogForm : Form
 	{
 		public delegate void OnCloseClickDelegate();
+
+		private static Logger log = LogManager.GetCurrentClassLogger();
 
 		private bool moving;
 
@@ -22,9 +26,11 @@ namespace TPCASTWindows
 
 		public BaseDialogForm()
 		{
-			base.StartPosition = FormStartPosition.CenterParent;
-			base.ShowInTaskbar = false;
 			this.InitializeComponent();
+			base.StartPosition = FormStartPosition.Manual;
+			base.Location = Util.sContext.Location + new Size((Util.sContext.Width - base.Width) / 2, (Util.sContext.Height - base.Height) / 2);
+			base.ShowInTaskbar = false;
+			WindowsMessage.OnBaseFormTaskbarCloseClick += new WindowsMessage.OnBaseFormTaskbarCloseClickDelegate(this.OnBaseFormTaskbarCloseClick);
 		}
 
 		private void button1_Click(object sender, EventArgs e)
@@ -56,12 +62,12 @@ namespace TPCASTWindows
 		{
 			if (e.Button == MouseButtons.Left && this.moving)
 			{
-				Point pt = new Point(e.Location.X - this.oldMousePosition.X, e.Location.Y - this.oldMousePosition.Y);
-				if (base.Location.Y + pt.Y > SystemInformation.WorkingArea.Height - 20)
+				Point newPosition = new Point(e.Location.X - this.oldMousePosition.X, e.Location.Y - this.oldMousePosition.Y);
+				if (base.Location.Y + newPosition.Y > SystemInformation.WorkingArea.Height - 20)
 				{
-					pt.Y = SystemInformation.WorkingArea.Height - 20 - base.Location.Y;
+					newPosition.Y = SystemInformation.WorkingArea.Height - 20 - base.Location.Y;
 				}
-				base.Location += new Size(pt);
+				base.Location += new Size(newPosition);
 			}
 		}
 
@@ -75,7 +81,24 @@ namespace TPCASTWindows
 
 		private void BaseDialogForm_FormClosing(object sender, FormClosingEventArgs e)
 		{
+			WindowsMessage.OnBaseFormTaskbarCloseClick -= new WindowsMessage.OnBaseFormTaskbarCloseClickDelegate(this.OnBaseFormTaskbarCloseClick);
 			Util.HideGrayBackground();
+		}
+
+		private void OnBaseFormTaskbarCloseClick()
+		{
+			base.Close();
+		}
+
+		private void BaseDialogForm_KeyDown(object sender, KeyEventArgs e)
+		{
+			BaseDialogForm.log.Trace("BaseDialogForm_KeyDown kc = " + e.KeyCode);
+			BaseDialogForm.log.Trace("BaseDialogForm_KeyDown m = " + e.Modifiers);
+			if (e.Alt && e.KeyCode == Keys.F4)
+			{
+				e.Handled = true;
+				this.closeButton.PerformClick();
+			}
 		}
 
 		protected override void Dispose(bool disposing)
@@ -109,11 +132,13 @@ namespace TPCASTWindows
 			base.ClientSize = new Size(500, 264);
 			base.Controls.Add(this.closeButton);
 			base.FormBorderStyle = FormBorderStyle.None;
+			base.KeyPreview = true;
 			base.Name = "BaseDialogForm";
 			this.Text = "BaseDialogForm";
 			base.FormClosing += new FormClosingEventHandler(this.BaseDialogForm_FormClosing);
 			base.FormClosed += new FormClosedEventHandler(this.BaseDialogForm_FormClosed);
 			base.Load += new EventHandler(this.BaseDialogForm_Load);
+			base.KeyDown += new KeyEventHandler(this.BaseDialogForm_KeyDown);
 			base.MouseDown += new MouseEventHandler(this.Panel_MouseDown);
 			base.MouseMove += new MouseEventHandler(this.Panel_MouseMove);
 			base.MouseUp += new MouseEventHandler(this.Panel_MouseUp);

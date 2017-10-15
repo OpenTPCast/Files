@@ -127,12 +127,13 @@ namespace TPCASTWindows
 				CheckWindow.isChecking = false;
 				this.hideWatingControl();
 				this.picControl.Image = Resources.image_control_waiting;
-				ControlDialog expr_24 = new ControlDialog();
-				expr_24.OnRetry = new ControlDialog.OnRetryDelegate(this.CheckControl);
-				expr_24.OnCloseClick = new BaseDialogForm.OnCloseClickDelegate(this.DialogClose);
-				expr_24.hasRouter = false;
 				Util.showGrayBackground();
-				expr_24.ShowDialog(this);
+				new ControlDialog
+				{
+					OnRetry = new ControlDialog.OnRetryDelegate(this.CheckControl),
+					OnCloseClick = new BaseDialogForm.OnCloseClickDelegate(this.DialogClose),
+					hasRouter = false
+				}.Show(Util.sContext);
 			}
 		}
 
@@ -148,11 +149,12 @@ namespace TPCASTWindows
 			CheckWindow.isChecking = false;
 			this.hideWatingControl();
 			this.picControl.Image = Resources.image_control_waiting;
-			ControlDialog expr_41 = new ControlDialog();
-			expr_41.OnRetry = new ControlDialog.OnRetryDelegate(this.CheckControl);
-			expr_41.OnCloseClick = new BaseDialogForm.OnCloseClickDelegate(this.DialogClose);
 			Util.showGrayBackground();
-			expr_41.ShowDialog(this);
+			new ControlDialog
+			{
+				OnRetry = new ControlDialog.OnRetryDelegate(this.CheckControl),
+				OnCloseClick = new BaseDialogForm.OnCloseClickDelegate(this.DialogClose)
+			}.Show(Util.sContext);
 		}
 
 		private void CheckBluetooth()

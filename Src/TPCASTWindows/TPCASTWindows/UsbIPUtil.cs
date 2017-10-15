@@ -1,3 +1,4 @@
+using NLog;
 using System;
 using System.Diagnostics;
 
@@ -5,6 +6,8 @@ namespace TPCASTWindows
 {
 	internal class UsbIPUtil
 	{
+		private static Logger log = LogManager.GetCurrentClassLogger();
+
 		public const int CONNECT_ERROR_ROUTER = -1001;
 
 		public const int CONNECT_ERROR_RASPBERRY = -1002;
@@ -17,10 +20,10 @@ namespace TPCASTWindows
 
 		public static int isUSBConnected()
 		{
-			int num = UsbIPUtil.isHostConnected();
-			if (num != 0)
+			int status = UsbIPUtil.isHostConnected();
+			if (status != 0)
 			{
-				return num;
+				return status;
 			}
 			if (UsbIPUtil.isCableLinked())
 			{
@@ -31,7 +34,7 @@ namespace TPCASTWindows
 
 		public static int isHostConnected()
 		{
-			if (ChannelUtil.getWirelessChannel() == null)
+			if (!ChannelUtil.pingRouterConnect())
 			{
 				return -1001;
 			}
@@ -44,21 +47,21 @@ namespace TPCASTWindows
 
 		public static int ConnectControl()
 		{
-			string text = UsbIPUtil.checkDevStateString();
-			if (!string.IsNullOrEmpty(text))
+			string linkStatus = UsbIPUtil.checkDevStateString();
+			if (!string.IsNullOrEmpty(linkStatus))
 			{
-				if (text.Contains("no available"))
+				if (linkStatus.Contains("no available"))
 				{
 					return -2000;
 				}
-				if (!text.Contains("disconnected"))
+				if (!linkStatus.Contains("disconnected"))
 				{
 					return 0;
 				}
-				string devStateString = UsbIPUtil.getDevStateString();
-				if (!string.IsNullOrEmpty(devStateString))
+				string output = UsbIPUtil.getDevStateString();
+				if (!string.IsNullOrEmpty(output))
 				{
-					if (devStateString.Contains("disconnected"))
+					if (output.Contains("disconnected"))
 					{
 						return -1000;
 					}
@@ -70,12 +73,12 @@ namespace TPCASTWindows
 
 		public static int ForceConnectControl()
 		{
-			string devStateString = UsbIPUtil.getDevStateString();
-			if (string.IsNullOrEmpty(devStateString))
+			string output = UsbIPUtil.getDevStateString();
+			if (string.IsNullOrEmpty(output))
 			{
 				return -1000;
 			}
-			if (devStateString.Contains("disconnected"))
+			if (output.Contains("disconnected"))
 			{
 				return -1000;
 			}
@@ -84,33 +87,33 @@ namespace TPCASTWindows
 
 		public static string getDevStateString()
 		{
-			Process process = new Process();
-			process.StartInfo.FileName = "GetDevState.exe";
-			process.StartInfo.WorkingDirectory = ".";
-			process.StartInfo.UseShellExecute = false;
-			process.StartInfo.RedirectStandardInput = true;
-			process.StartInfo.RedirectStandardOutput = true;
-			process.StartInfo.RedirectStandardError = true;
-			process.StartInfo.CreateNoWindow = true;
-			process.Start();
-			string expr_74 = process.StandardOutput.ReadToEnd();
-			Console.WriteLine(expr_74);
-			process.Close();
-			return expr_74;
+			Process expr_05 = new Process();
+			expr_05.StartInfo.FileName = "GetDevState.exe";
+			expr_05.StartInfo.WorkingDirectory = ".";
+			expr_05.StartInfo.UseShellExecute = false;
+			expr_05.StartInfo.RedirectStandardInput = true;
+			expr_05.StartInfo.RedirectStandardOutput = true;
+			expr_05.StartInfo.RedirectStandardError = true;
+			expr_05.StartInfo.CreateNoWindow = true;
+			expr_05.Start();
+			string output = expr_05.StandardOutput.ReadToEnd();
+			UsbIPUtil.log.Trace(output);
+			expr_05.Close();
+			return output;
 		}
 
 		public static int isUsbLinked()
 		{
-			string text = UsbIPUtil.checkDevStateString();
-			if (string.IsNullOrEmpty(text))
+			string output = UsbIPUtil.checkDevStateString();
+			if (string.IsNullOrEmpty(output))
 			{
 				return -1000;
 			}
-			if (text.Contains("disconnected"))
+			if (output.Contains("disconnected"))
 			{
 				return -1000;
 			}
-			if (text.Contains("no available"))
+			if (output.Contains("no available"))
 			{
 				return -2000;
 			}
@@ -119,126 +122,156 @@ namespace TPCASTWindows
 
 		public static bool isHostLinked()
 		{
-			string text = UsbIPUtil.checkDevHostString();
-			return !string.IsNullOrEmpty(text) && !text.Contains("can not connect");
+			string hostState = UsbIPUtil.checkDevHostString();
+			return !string.IsNullOrEmpty(hostState) && !hostState.Contains("can not connect") && !hostState.Contains("fail");
 		}
 
 		public static bool isCableLinked()
 		{
-			Console.WriteLine("isCableLinked");
-			string text = UsbIPUtil.checkHelmetCableString();
-			return !string.IsNullOrEmpty(text) && !text.Contains("disconnected") && !text.Contains("failed");
+			UsbIPUtil.log.Trace("isCableLinked");
+			string cableState = UsbIPUtil.checkHelmetCableString();
+			return !string.IsNullOrEmpty(cableState) && !cableState.Contains("disconnected") && !cableState.Contains("failed");
 		}
 
 		public static bool isDriverInstalled()
 		{
-			string text = UsbIPUtil.checkDriverString();
-			return !string.IsNullOrEmpty(text) && text.Contains("OK");
+			string driverState = UsbIPUtil.checkDriverString();
+			return !string.IsNullOrEmpty(driverState) && driverState.Contains("OK");
+		}
+
+		public static bool isServiceOk()
+		{
+			string serviceState = UsbIPUtil.checkServerString();
+			return !string.IsNullOrEmpty(serviceState) && serviceState.Contains("OK");
 		}
 
 		public static bool RebootService()
 		{
-			string text = UsbIPUtil.rebootTPCASTService();
-			if (string.IsNullOrEmpty(text))
+			string result = UsbIPUtil.rebootTPCASTService();
+			if (string.IsNullOrEmpty(result))
 			{
 				return false;
 			}
-			if (text.Contains("is enable"))
+			if (result.Contains("is enable"))
 			{
 				return true;
 			}
-			text.Contains("Error");
+			result.Contains("Error");
 			return false;
 		}
 
 		public static string checkDevStateString()
 		{
-			Process process = new Process();
-			process.StartInfo.FileName = "GetDevState.exe";
-			process.StartInfo.Arguments = "status";
-			process.StartInfo.WorkingDirectory = ".";
-			process.StartInfo.UseShellExecute = false;
-			process.StartInfo.RedirectStandardInput = true;
-			process.StartInfo.RedirectStandardOutput = true;
-			process.StartInfo.RedirectStandardError = true;
-			process.StartInfo.CreateNoWindow = true;
-			process.Start();
-			string expr_84 = process.StandardOutput.ReadToEnd();
-			Console.WriteLine(expr_84);
-			process.Close();
-			return expr_84;
+			Process expr_05 = new Process();
+			expr_05.StartInfo.FileName = "GetDevState.exe";
+			expr_05.StartInfo.Arguments = "status";
+			expr_05.StartInfo.WorkingDirectory = ".";
+			expr_05.StartInfo.UseShellExecute = false;
+			expr_05.StartInfo.RedirectStandardInput = true;
+			expr_05.StartInfo.RedirectStandardOutput = true;
+			expr_05.StartInfo.RedirectStandardError = true;
+			expr_05.StartInfo.CreateNoWindow = true;
+			expr_05.Start();
+			string output = expr_05.StandardOutput.ReadToEnd();
+			UsbIPUtil.log.Trace(output);
+			expr_05.Close();
+			return output;
+		}
+
+		public static bool isDevStateConnect()
+		{
+			string output = UsbIPUtil.checkDevStateString();
+			return !string.IsNullOrEmpty(output) && !output.Contains("disconnected") && !output.Contains("no available");
 		}
 
 		public static string checkDevHostString()
 		{
-			Process process = new Process();
-			process.StartInfo.FileName = "GetDevState.exe";
-			process.StartInfo.Arguments = "host";
-			process.StartInfo.WorkingDirectory = ".";
-			process.StartInfo.UseShellExecute = false;
-			process.StartInfo.RedirectStandardInput = true;
-			process.StartInfo.RedirectStandardOutput = true;
-			process.StartInfo.RedirectStandardError = true;
-			process.StartInfo.CreateNoWindow = true;
-			process.Start();
-			string expr_84 = process.StandardOutput.ReadToEnd();
-			Console.WriteLine(expr_84);
-			process.Close();
-			return expr_84;
+			Process expr_05 = new Process();
+			expr_05.StartInfo.FileName = "GetDevState.exe";
+			expr_05.StartInfo.Arguments = "host";
+			expr_05.StartInfo.WorkingDirectory = ".";
+			expr_05.StartInfo.UseShellExecute = false;
+			expr_05.StartInfo.RedirectStandardInput = true;
+			expr_05.StartInfo.RedirectStandardOutput = true;
+			expr_05.StartInfo.RedirectStandardError = true;
+			expr_05.StartInfo.CreateNoWindow = true;
+			expr_05.Start();
+			string output = expr_05.StandardOutput.ReadToEnd();
+			UsbIPUtil.log.Trace(output);
+			expr_05.Close();
+			return output;
 		}
 
 		public static string checkHelmetCableString()
 		{
-			Process process = new Process();
-			process.StartInfo.FileName = "GetDevState.exe";
-			process.StartInfo.Arguments = "cable";
-			process.StartInfo.WorkingDirectory = ".";
-			process.StartInfo.UseShellExecute = false;
-			process.StartInfo.RedirectStandardInput = true;
-			process.StartInfo.RedirectStandardOutput = true;
-			process.StartInfo.RedirectStandardError = true;
-			process.StartInfo.CreateNoWindow = true;
-			process.Start();
-			string expr_84 = process.StandardOutput.ReadToEnd();
-			Console.WriteLine(expr_84);
-			process.Close();
-			return expr_84;
+			Process expr_05 = new Process();
+			expr_05.StartInfo.FileName = "GetDevState.exe";
+			expr_05.StartInfo.Arguments = "cable";
+			expr_05.StartInfo.WorkingDirectory = ".";
+			expr_05.StartInfo.UseShellExecute = false;
+			expr_05.StartInfo.RedirectStandardInput = true;
+			expr_05.StartInfo.RedirectStandardOutput = true;
+			expr_05.StartInfo.RedirectStandardError = true;
+			expr_05.StartInfo.CreateNoWindow = true;
+			expr_05.Start();
+			string output = expr_05.StandardOutput.ReadToEnd();
+			UsbIPUtil.log.Trace(output);
+			expr_05.Close();
+			return output;
 		}
 
 		public static string checkDriverString()
 		{
-			Process process = new Process();
-			process.StartInfo.FileName = "GetDevState.exe";
-			process.StartInfo.Arguments = "driver";
-			process.StartInfo.WorkingDirectory = ".";
-			process.StartInfo.UseShellExecute = false;
-			process.StartInfo.RedirectStandardInput = true;
-			process.StartInfo.RedirectStandardOutput = true;
-			process.StartInfo.RedirectStandardError = true;
-			process.StartInfo.CreateNoWindow = true;
-			process.Start();
-			string expr_84 = process.StandardOutput.ReadToEnd();
-			Console.WriteLine(expr_84);
-			process.Close();
-			return expr_84;
+			Process expr_05 = new Process();
+			expr_05.StartInfo.FileName = "GetDevState.exe";
+			expr_05.StartInfo.Arguments = "driver";
+			expr_05.StartInfo.WorkingDirectory = ".";
+			expr_05.StartInfo.UseShellExecute = false;
+			expr_05.StartInfo.RedirectStandardInput = true;
+			expr_05.StartInfo.RedirectStandardOutput = true;
+			expr_05.StartInfo.RedirectStandardError = true;
+			expr_05.StartInfo.CreateNoWindow = true;
+			expr_05.Start();
+			string output = expr_05.StandardOutput.ReadToEnd();
+			UsbIPUtil.log.Trace(output);
+			expr_05.Close();
+			return output;
+		}
+
+		public static string checkServerString()
+		{
+			Process expr_05 = new Process();
+			expr_05.StartInfo.FileName = "GetDevState.exe";
+			expr_05.StartInfo.Arguments = "service";
+			expr_05.StartInfo.WorkingDirectory = ".";
+			expr_05.StartInfo.UseShellExecute = false;
+			expr_05.StartInfo.RedirectStandardInput = true;
+			expr_05.StartInfo.RedirectStandardOutput = true;
+			expr_05.StartInfo.RedirectStandardError = true;
+			expr_05.StartInfo.CreateNoWindow = true;
+			expr_05.Start();
+			string output = expr_05.StandardOutput.ReadToEnd();
+			UsbIPUtil.log.Trace(output);
+			expr_05.Close();
+			return output;
 		}
 
 		public static string rebootTPCASTService()
 		{
-			Process process = new Process();
-			process.StartInfo.FileName = "TpcastDaemon.exe";
-			process.StartInfo.Arguments = "enable";
-			process.StartInfo.WorkingDirectory = ".";
-			process.StartInfo.UseShellExecute = false;
-			process.StartInfo.RedirectStandardInput = true;
-			process.StartInfo.RedirectStandardOutput = true;
-			process.StartInfo.RedirectStandardError = true;
-			process.StartInfo.CreateNoWindow = true;
-			process.Start();
-			string expr_84 = process.StandardOutput.ReadToEnd();
-			Console.WriteLine(expr_84);
-			process.Close();
-			return expr_84;
+			Process expr_05 = new Process();
+			expr_05.StartInfo.FileName = "TpcastDaemon.exe";
+			expr_05.StartInfo.Arguments = "enable";
+			expr_05.StartInfo.WorkingDirectory = ".";
+			expr_05.StartInfo.UseShellExecute = false;
+			expr_05.StartInfo.RedirectStandardInput = true;
+			expr_05.StartInfo.RedirectStandardOutput = true;
+			expr_05.StartInfo.RedirectStandardError = true;
+			expr_05.StartInfo.CreateNoWindow = true;
+			expr_05.Start();
+			string output = expr_05.StandardOutput.ReadToEnd();
+			UsbIPUtil.log.Trace(output);
+			expr_05.Close();
+			return output;
 		}
 	}
 }

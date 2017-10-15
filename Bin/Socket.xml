@@ -1,0 +1,107 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Socket</name>
+    </assembly>
+    <members>
+        <member name="T:SocketLibrary.ConnectedSocket">
+            <summary>
+            An IPv4 TCP connected socket.
+            </summary>
+        </member>
+        <member name="M:SocketLibrary.ConnectedSocket.#ctor(System.Net.EndPoint)">
+            <summary>
+            Constructs and connects the socket.
+            </summary>
+            <param name="endpoint">Endpoint to connect to</param>
+        </member>
+        <member name="M:SocketLibrary.ConnectedSocket.#ctor(System.Net.EndPoint,System.Text.Encoding)">
+            <summary>
+            Constructs and connects the socket.
+            </summary>
+            <param name="endpoint">Endpoint to connect to</param>
+            <param name="encoding">Encoding of the content sended and received by the socket</param>
+        </member>
+        <member name="M:SocketLibrary.ConnectedSocket.#ctor(System.String,System.Int32)">
+            <summary>
+            Constructs and connects the socket.
+            </summary>
+            <param name="host">Host to connect to</param>
+            <param name="port">Port to connect to</param>
+        </member>
+        <member name="M:SocketLibrary.ConnectedSocket.#ctor(System.String,System.Int32,System.Text.Encoding)">
+            <summary>
+            Constructs and connects the socket.
+            </summary>
+            <param name="host">Host to connect to</param>
+            <param name="port">Port to connect to</param>
+            <param name="encoding">Encoding of the content sended and received by the socket</param>
+        </member>
+        <member name="M:SocketLibrary.ConnectedSocket.Dispose">
+            <summary>
+            Disposes the socket.
+            </summary>
+        </member>
+        <member name="M:SocketLibrary.ConnectedSocket.Receive(System.Int32)">
+            <summary>
+            Receives any pending data.
+            This blocks execution until there's data available.
+            </summary>
+            <param name="bufferSize">Amount of data to read</param>
+            <returns>Received data</returns>
+        </member>
+        <member name="M:SocketLibrary.ConnectedSocket.Send(System.String)">
+            <summary>
+            Sends the given data.
+            </summary>
+            <param name="data">Data to send</param>
+        </member>
+        <member name="P:SocketLibrary.ConnectedSocket.AnythingToReceive">
+            <summary>
+            True if there's any data to receive on the socket.
+            </summary>
+        </member>
+        <member name="P:SocketLibrary.ConnectedSocket.UnderlyingSocket">
+            <summary>
+            The underlying socket.
+            </summary>
+        </member>
+        <member name="T:SocketLibrary.SocketListener">
+            <summary>
+            An IPv4 TCP socket listener.
+            </summary>
+        </member>
+        <member name="M:SocketLibrary.SocketListener.#ctor(System.Net.EndPoint,System.Int32)">
+            <summary>
+            Constructs and listens in the given port.
+            </summary>
+            <param name="endpoint">Endpoint to listen (defaults to 127.0.0.1)</param>
+            <param name="backlog">Number of incoming connections that can be queued for acceptance</param>
+        </member>
+        <member name="M:SocketLibrary.SocketListener.#ctor(System.Int32,System.String,System.Int32)">
+            <summary>
+            Constructs and listens in the given port.
+            </summary>
+            <param name="port">Port to listen</param>
+            <param name="ip">IP to listen (defaults to 127.0.0.1)</param>
+            <param name="backlog">Number of incoming connections that can be queued for acceptance</param>
+        </member>
+        <member name="M:SocketLibrary.SocketListener.Accept">
+            <summary>
+            Accepts a connection.
+            This blocks the execution until a connection is made.
+            </summary>
+            <returns>The connected socket</returns>
+        </member>
+        <member name="M:SocketLibrary.SocketListener.Dispose">
+            <summary>
+            Disposes the listener.
+            </summary>
+        </member>
+        <member name="P:SocketLibrary.SocketListener.UnderlyingSocket">
+            <summary>
+            The underlying socket.
+            </summary>
+        </member>
+    </members>
+</doc>

@@ -4,7 +4,7 @@ namespace TPCASTReboot
 {
 	internal class Constants
 	{
-		public static string downloadPath = "C:\\Users\\" + Environment.UserName + "\\Downloads\\TPCAST";
+		public static string downloadPath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) + "\\Downloads\\TPCAST";
 
 		public static string updateSoftwareFilePath = Constants.downloadPath + "\\TPCASTUpdate.exe";
 

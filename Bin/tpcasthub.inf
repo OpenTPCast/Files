@@ -16,7 +16,7 @@ Signature="$WINDOWS NT$"
 Class=System
 ClassGuid={4D36E97D-E325-11CE-BFC1-08002BE10318}
 Provider=%TPCAST%
-DriverVer=04/13/2017,14.37.1.986
+DriverVer=04/21/2017,17.8.52.882
 CatalogFile=tpcasthub.cat
 
 [DestinationDirs]
@@ -82,7 +82,7 @@ LoadOrderGroup = Extended Base
 
 [Strings]
 SPSVCINST_ASSOCSERVICE= 0x00000002
-TPCAST = "Tpcast"
+TPCAST = "TPCAST"
 TPCASTHUB.DeviceDesc = "Tpcast Virtual Hub"
 Tpcasthub.SVCDESC = "Tpcast Virtual Hub"
 DiskId1 = "TPCAST Virtual Hub Disk #1"

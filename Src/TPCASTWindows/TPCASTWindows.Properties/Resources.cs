@@ -42,6 +42,22 @@ namespace TPCASTWindows.Properties
 			}
 		}
 
+		internal static string alreadyNewest
+		{
+			get
+			{
+				return Resources.ResourceManager.GetString("alreadyNewest", Resources.resourceCulture);
+			}
+		}
+
+		internal static Bitmap back
+		{
+			get
+			{
+				return (Bitmap)Resources.ResourceManager.GetObject("back", Resources.resourceCulture);
+			}
+		}
+
 		internal static Bitmap battery
 		{
 			get
@@ -50,11 +66,19 @@ namespace TPCASTWindows.Properties
 			}
 		}
 
-		internal static Bitmap battery_en
+		internal static Bitmap be_launch_background
 		{
 			get
 			{
-				return (Bitmap)Resources.ResourceManager.GetObject("battery_en", Resources.resourceCulture);
+				return (Bitmap)Resources.ResourceManager.GetObject("be_launch_background", Resources.resourceCulture);
+			}
+		}
+
+		internal static string be_titleText
+		{
+			get
+			{
+				return Resources.ResourceManager.GetString("be_titleText", Resources.resourceCulture);
 			}
 		}
 
@@ -202,11 +226,11 @@ namespace TPCASTWindows.Properties
 			}
 		}
 
-		internal static Bitmap connect_success_progres
+		internal static Bitmap connect_success_progress
 		{
 			get
 			{
-				return (Bitmap)Resources.ResourceManager.GetObject("connect_success_progres", Resources.resourceCulture);
+				return (Bitmap)Resources.ResourceManager.GetObject("connect_success_progress", Resources.resourceCulture);
 			}
 		}
 
@@ -266,6 +290,30 @@ namespace TPCASTWindows.Properties
 			}
 		}
 
+		internal static string ControlReconnecting
+		{
+			get
+			{
+				return Resources.ResourceManager.GetString("ControlReconnecting", Resources.resourceCulture);
+			}
+		}
+
+		internal static string currentVersion
+		{
+			get
+			{
+				return Resources.ResourceManager.GetString("currentVersion", Resources.resourceCulture);
+			}
+		}
+
+		internal static string defaultWater
+		{
+			get
+			{
+				return Resources.ResourceManager.GetString("defaultWater", Resources.resourceCulture);
+			}
+		}
+
 		internal static Bitmap dialog_close
 		{
 			get
@@ -314,11 +362,59 @@ namespace TPCASTWindows.Properties
 			}
 		}
 
+		internal static Bitmap drop_wifi
+		{
+			get
+			{
+				return (Bitmap)Resources.ResourceManager.GetObject("drop_wifi", Resources.resourceCulture);
+			}
+		}
+
 		internal static Bitmap exception
 		{
 			get
 			{
 				return (Bitmap)Resources.ResourceManager.GetObject("exception", Resources.resourceCulture);
+			}
+		}
+
+		internal static string faqLink
+		{
+			get
+			{
+				return Resources.ResourceManager.GetString("faqLink", Resources.resourceCulture);
+			}
+		}
+
+		internal static string firmwareCurrentVersion
+		{
+			get
+			{
+				return Resources.ResourceManager.GetString("firmwareCurrentVersion", Resources.resourceCulture);
+			}
+		}
+
+		internal static string firmwareDonloadFinish
+		{
+			get
+			{
+				return Resources.ResourceManager.GetString("firmwareDonloadFinish", Resources.resourceCulture);
+			}
+		}
+
+		internal static string firmwareUnconnected
+		{
+			get
+			{
+				return Resources.ResourceManager.GetString("firmwareUnconnected", Resources.resourceCulture);
+			}
+		}
+
+		internal static string firmwareVersion
+		{
+			get
+			{
+				return Resources.ResourceManager.GetString("firmwareVersion", Resources.resourceCulture);
 			}
 		}
 
@@ -351,14 +447,6 @@ namespace TPCASTWindows.Properties
 			get
 			{
 				return (Bitmap)Resources.ResourceManager.GetObject("guide_image", Resources.resourceCulture);
-			}
-		}
-
-		internal static Bitmap guide_image_en
-		{
-			get
-			{
-				return (Bitmap)Resources.ResourceManager.GetObject("guide_image_en", Resources.resourceCulture);
 			}
 		}
 
@@ -490,14 +578,6 @@ namespace TPCASTWindows.Properties
 			}
 		}
 
-		internal static Bitmap interrupt_battery_en
-		{
-			get
-			{
-				return (Bitmap)Resources.ResourceManager.GetObject("interrupt_battery_en", Resources.resourceCulture);
-			}
-		}
-
 		internal static Bitmap interrupt_router
 		{
 			get
@@ -506,11 +586,11 @@ namespace TPCASTWindows.Properties
 			}
 		}
 
-		internal static Bitmap interrupt_router_en
+		internal static string language
 		{
 			get
 			{
-				return (Bitmap)Resources.ResourceManager.GetObject("interrupt_router_en", Resources.resourceCulture);
+				return Resources.ResourceManager.GetString("language", Resources.resourceCulture);
 			}
 		}
 
@@ -522,11 +602,19 @@ namespace TPCASTWindows.Properties
 			}
 		}
 
-		internal static Bitmap launch_background_en
+		internal static Bitmap launch_background_pannel
 		{
 			get
 			{
-				return (Bitmap)Resources.ResourceManager.GetObject("launch_background_en", Resources.resourceCulture);
+				return (Bitmap)Resources.ResourceManager.GetObject("launch_background_pannel", Resources.resourceCulture);
+			}
+		}
+
+		internal static string leftOffset
+		{
+			get
+			{
+				return Resources.ResourceManager.GetString("leftOffset", Resources.resourceCulture);
 			}
 		}
 
@@ -538,6 +626,14 @@ namespace TPCASTWindows.Properties
 			}
 		}
 
+		internal static Bitmap line_loaded_gen2
+		{
+			get
+			{
+				return (Bitmap)Resources.ResourceManager.GetObject("line_loaded_gen2", Resources.resourceCulture);
+			}
+		}
+
 		internal static Bitmap line_unload
 		{
 			get
@@ -546,11 +642,27 @@ namespace TPCASTWindows.Properties
 			}
 		}
 
+		internal static Bitmap line_unload_gen2
+		{
+			get
+			{
+				return (Bitmap)Resources.ResourceManager.GetObject("line_unload_gen2", Resources.resourceCulture);
+			}
+		}
+
 		internal static Bitmap logo_title
 		{
 			get
 			{
 				return (Bitmap)Resources.ResourceManager.GetObject("logo_title", Resources.resourceCulture);
+			}
+		}
+
+		internal static string messageSuccess
+		{
+			get
+			{
+				return Resources.ResourceManager.GetString("messageSuccess", Resources.resourceCulture);
 			}
 		}
 
@@ -650,11 +762,27 @@ namespace TPCASTWindows.Properties
 			}
 		}
 
+		internal static string noInternet
+		{
+			get
+			{
+				return Resources.ResourceManager.GetString("noInternet", Resources.resourceCulture);
+			}
+		}
+
 		internal static Bitmap off
 		{
 			get
 			{
 				return (Bitmap)Resources.ResourceManager.GetObject("off", Resources.resourceCulture);
+			}
+		}
+
+		internal static string passwordError
+		{
+			get
+			{
+				return Resources.ResourceManager.GetString("passwordError", Resources.resourceCulture);
 			}
 		}
 
@@ -674,11 +802,27 @@ namespace TPCASTWindows.Properties
 			}
 		}
 
+		internal static Bitmap raspberry_fail_gen2
+		{
+			get
+			{
+				return (Bitmap)Resources.ResourceManager.GetObject("raspberry_fail_gen2", Resources.resourceCulture);
+			}
+		}
+
 		internal static Bitmap raspberry_normal
 		{
 			get
 			{
 				return (Bitmap)Resources.ResourceManager.GetObject("raspberry_normal", Resources.resourceCulture);
+			}
+		}
+
+		internal static Bitmap raspberry_normal_gen2
+		{
+			get
+			{
+				return (Bitmap)Resources.ResourceManager.GetObject("raspberry_normal_gen2", Resources.resourceCulture);
 			}
 		}
 
@@ -690,11 +834,75 @@ namespace TPCASTWindows.Properties
 			}
 		}
 
+		internal static Bitmap raspberry_success_gen2
+		{
+			get
+			{
+				return (Bitmap)Resources.ResourceManager.GetObject("raspberry_success_gen2", Resources.resourceCulture);
+			}
+		}
+
+		internal static string raspberryChecking
+		{
+			get
+			{
+				return Resources.ResourceManager.GetString("raspberryChecking", Resources.resourceCulture);
+			}
+		}
+
+		internal static string raspberryConnecting
+		{
+			get
+			{
+				return Resources.ResourceManager.GetString("raspberryConnecting", Resources.resourceCulture);
+			}
+		}
+
+		internal static string raspberryFail
+		{
+			get
+			{
+				return Resources.ResourceManager.GetString("raspberryFail", Resources.resourceCulture);
+			}
+		}
+
+		internal static string RaspberryRebootFinish
+		{
+			get
+			{
+				return Resources.ResourceManager.GetString("RaspberryRebootFinish", Resources.resourceCulture);
+			}
+		}
+
+		internal static string raspberrySuccess
+		{
+			get
+			{
+				return Resources.ResourceManager.GetString("raspberrySuccess", Resources.resourceCulture);
+			}
+		}
+
+		internal static Bitmap refresh
+		{
+			get
+			{
+				return (Bitmap)Resources.ResourceManager.GetObject("refresh", Resources.resourceCulture);
+			}
+		}
+
 		internal static Bitmap router_fail
 		{
 			get
 			{
 				return (Bitmap)Resources.ResourceManager.GetObject("router_fail", Resources.resourceCulture);
+			}
+		}
+
+		internal static Bitmap router_fail_gen2
+		{
+			get
+			{
+				return (Bitmap)Resources.ResourceManager.GetObject("router_fail_gen2", Resources.resourceCulture);
 			}
 		}
 
@@ -706,6 +914,22 @@ namespace TPCASTWindows.Properties
 			}
 		}
 
+		internal static Bitmap router_normal_gen2
+		{
+			get
+			{
+				return (Bitmap)Resources.ResourceManager.GetObject("router_normal_gen2", Resources.resourceCulture);
+			}
+		}
+
+		internal static Bitmap router_ssid
+		{
+			get
+			{
+				return (Bitmap)Resources.ResourceManager.GetObject("router_ssid", Resources.resourceCulture);
+			}
+		}
+
 		internal static Bitmap router_success
 		{
 			get
@@ -714,11 +938,155 @@ namespace TPCASTWindows.Properties
 			}
 		}
 
+		internal static Bitmap router_success_gen2
+		{
+			get
+			{
+				return (Bitmap)Resources.ResourceManager.GetObject("router_success_gen2", Resources.resourceCulture);
+			}
+		}
+
+		internal static string routerChecking
+		{
+			get
+			{
+				return Resources.ResourceManager.GetString("routerChecking", Resources.resourceCulture);
+			}
+		}
+
+		internal static string routerFail
+		{
+			get
+			{
+				return Resources.ResourceManager.GetString("routerFail", Resources.resourceCulture);
+			}
+		}
+
+		internal static string routerRebootFinish
+		{
+			get
+			{
+				return Resources.ResourceManager.GetString("routerRebootFinish", Resources.resourceCulture);
+			}
+		}
+
+		internal static string routerRebooting
+		{
+			get
+			{
+				return Resources.ResourceManager.GetString("routerRebooting", Resources.resourceCulture);
+			}
+		}
+
+		internal static string routerSuccess
+		{
+			get
+			{
+				return Resources.ResourceManager.GetString("routerSuccess", Resources.resourceCulture);
+			}
+		}
+
+		internal static string softwareDownloadFinish
+		{
+			get
+			{
+				return Resources.ResourceManager.GetString("softwareDownloadFinish", Resources.resourceCulture);
+			}
+		}
+
+		internal static string softwareVersion
+		{
+			get
+			{
+				return Resources.ResourceManager.GetString("softwareVersion", Resources.resourceCulture);
+			}
+		}
+
+		internal static Bitmap splash_close
+		{
+			get
+			{
+				return (Bitmap)Resources.ResourceManager.GetObject("splash_close", Resources.resourceCulture);
+			}
+		}
+
+		internal static Bitmap splash_min
+		{
+			get
+			{
+				return (Bitmap)Resources.ResourceManager.GetObject("splash_min", Resources.resourceCulture);
+			}
+		}
+
+		internal static Bitmap splash01
+		{
+			get
+			{
+				return (Bitmap)Resources.ResourceManager.GetObject("splash01", Resources.resourceCulture);
+			}
+		}
+
+		internal static Bitmap splash02
+		{
+			get
+			{
+				return (Bitmap)Resources.ResourceManager.GetObject("splash02", Resources.resourceCulture);
+			}
+		}
+
+		internal static Bitmap splash03
+		{
+			get
+			{
+				return (Bitmap)Resources.ResourceManager.GetObject("splash03", Resources.resourceCulture);
+			}
+		}
+
+		internal static Bitmap splash04
+		{
+			get
+			{
+				return (Bitmap)Resources.ResourceManager.GetObject("splash04", Resources.resourceCulture);
+			}
+		}
+
+		internal static Bitmap splash05
+		{
+			get
+			{
+				return (Bitmap)Resources.ResourceManager.GetObject("splash05", Resources.resourceCulture);
+			}
+		}
+
+		internal static string ssidError
+		{
+			get
+			{
+				return Resources.ResourceManager.GetString("ssidError", Resources.resourceCulture);
+			}
+		}
+
+		internal static Bitmap success
+		{
+			get
+			{
+				return (Bitmap)Resources.ResourceManager.GetObject("success", Resources.resourceCulture);
+			}
+		}
+
 		internal static Bitmap system_fail
 		{
 			get
 			{
 				return (Bitmap)Resources.ResourceManager.GetObject("system_fail", Resources.resourceCulture);
+			}
+		}
+
+		internal static Bitmap system_fail_gen2
+		{
+			get
+			{
+				return (Bitmap)Resources.ResourceManager.GetObject("system_fail_gen2", Resources.resourceCulture);
 			}
 		}
 
@@ -738,6 +1106,14 @@ namespace TPCASTWindows.Properties
 			}
 		}
 
+		internal static Bitmap system_normal_gen2
+		{
+			get
+			{
+				return (Bitmap)Resources.ResourceManager.GetObject("system_normal_gen2", Resources.resourceCulture);
+			}
+		}
+
 		internal static Bitmap system_success
 		{
 			get
@@ -746,11 +1122,59 @@ namespace TPCASTWindows.Properties
 			}
 		}
 
+		internal static Bitmap system_success_gen2
+		{
+			get
+			{
+				return (Bitmap)Resources.ResourceManager.GetObject("system_success_gen2", Resources.resourceCulture);
+			}
+		}
+
 		internal static Bitmap system_unload
 		{
 			get
 			{
 				return (Bitmap)Resources.ResourceManager.GetObject("system_unload", Resources.resourceCulture);
+			}
+		}
+
+		internal static string systemChecking
+		{
+			get
+			{
+				return Resources.ResourceManager.GetString("systemChecking", Resources.resourceCulture);
+			}
+		}
+
+		internal static string systemFail
+		{
+			get
+			{
+				return Resources.ResourceManager.GetString("systemFail", Resources.resourceCulture);
+			}
+		}
+
+		internal static string systemSuccess
+		{
+			get
+			{
+				return Resources.ResourceManager.GetString("systemSuccess", Resources.resourceCulture);
+			}
+		}
+
+		internal static string titleText
+		{
+			get
+			{
+				return Resources.ResourceManager.GetString("titleText", Resources.resourceCulture);
+			}
+		}
+
+		internal static string tutorialLink
+		{
+			get
+			{
+				return Resources.ResourceManager.GetString("tutorialLink", Resources.resourceCulture);
 			}
 		}
 
@@ -786,11 +1210,27 @@ namespace TPCASTWindows.Properties
 			}
 		}
 
+		internal static Bitmap vr_fail_gen2
+		{
+			get
+			{
+				return (Bitmap)Resources.ResourceManager.GetObject("vr_fail_gen2", Resources.resourceCulture);
+			}
+		}
+
 		internal static Bitmap vr_normal
 		{
 			get
 			{
 				return (Bitmap)Resources.ResourceManager.GetObject("vr_normal", Resources.resourceCulture);
+			}
+		}
+
+		internal static Bitmap vr_normal_gen2
+		{
+			get
+			{
+				return (Bitmap)Resources.ResourceManager.GetObject("vr_normal_gen2", Resources.resourceCulture);
 			}
 		}
 
@@ -807,6 +1247,14 @@ namespace TPCASTWindows.Properties
 			get
 			{
 				return (Bitmap)Resources.ResourceManager.GetObject("vr_success", Resources.resourceCulture);
+			}
+		}
+
+		internal static Bitmap vr_success_gen2
+		{
+			get
+			{
+				return (Bitmap)Resources.ResourceManager.GetObject("vr_success_gen2", Resources.resourceCulture);
 			}
 		}
 
