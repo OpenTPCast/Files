@@ -1,0 +1,89 @@
+;/*++
+;
+;Copyright (c) 2016-2017 TPCAST Software
+;
+;Module Name:
+;
+;    Tpcasthub.inf
+;
+;Abstract:
+;    INF file for installing Tpcast Virtual Hub 
+;
+;--*/
+
+[Version]
+Signature="$WINDOWS NT$"
+Class=System
+ClassGuid={4D36E97D-E325-11CE-BFC1-08002BE10318}
+Provider=%TPCAST%
+DriverVer=04/13/2017,14.37.1.986
+CatalogFile=tpcasthub.cat
+
+[DestinationDirs]
+DefaultDestDir = 12
+
+[SourceDisksNames]
+1 = %DiskId1%,,,""
+
+[SourceDisksFiles]
+tpcasthub.sys  = 1,,
+
+;*****************************************
+; TPCASTHUB  Install Section
+;*****************************************
+
+[Manufacturer]
+%StdMfg%=Tpcast, NTx86, NTia64, NTamd64
+
+; 2000
+;[Tpcast]
+;%TPCASTHUB.DeviceDesc%=TPCASTHUB_Device, Tpcasthub
+
+;x86
+[Tpcast.NTx86]
+%TPCASTHUB.DeviceDesc%=TPCASTHUB_Device, Tpcasthub
+
+;AMD64
+[Tpcast.NTamd64]
+%TPCASTHUB.DeviceDesc%=TPCASTHUB_Device, Tpcasthub
+
+;IA64
+[Tpcast.NTia64]
+%TPCASTHUB.DeviceDesc%=TPCASTHUB_Device, Tpcasthub
+
+
+[TPCASTHUB_Device.NT]
+CopyFiles=Drivers_Dir
+
+;[TPCASTHUB_Device.NT.HW]
+;AddReg=TPCASTHUB_Device.NT.AddReg
+
+;[TPCASTHUB_Device.NT.AddReg]                            
+;HKR,,DeviceCharacteristics,0x10001,0x0100         ; Use same security checks on relative opens
+;HKR,,Security,,"D:P(A;;GA;;;BA)(A;;GA;;;SY)"      ; Allow generic-all access to Built-in administrators and Local system 
+
+[Drivers_Dir]
+tpcasthub.sys
+
+
+;-------------- Service installation
+[TPCASTHUB_Device.NT.Services]
+AddService = Tpcasthub,%SPSVCINST_ASSOCSERVICE%, Tpcasthub_Service_Inst
+
+; -------------- driver install sections
+[Tpcasthub_Service_Inst]
+DisplayName    = %Tpcasthub.SVCDESC%
+ServiceType    = 1               ; SERVICE_KERNEL_DRIVER
+StartType      = 3               ; SERVICE_DEMAND_START 
+ErrorControl   = 1               ; SERVICE_ERROR_NORMAL
+ServiceBinary  = %12%\Tpcasthub.sys
+LoadOrderGroup = Extended Base
+
+
+[Strings]
+SPSVCINST_ASSOCSERVICE= 0x00000002
+TPCAST = "Tpcast"
+TPCASTHUB.DeviceDesc = "Tpcast Virtual Hub"
+Tpcasthub.SVCDESC = "Tpcast Virtual Hub"
+DiskId1 = "TPCAST Virtual Hub Disk #1"
+StdMfg="Tpcast"

@@ -1,0 +1,84 @@
+;/*++
+;
+;Copyright (c) 2016-2017 TPCAST Software
+;
+;Module Name:
+;
+;    Tpcaststub.inf
+;
+;Abstract:
+;    INF file for installing Tpcast Stub
+;
+;--*/
+
+[Version]
+Signature="$WINDOWS NT$"
+Class=TpcastStub
+ClassGuid={56381A73-FFA0-4CBD-A746-3990B9BBFF7C}
+Provider=%TPCAST%
+DriverVer=04/13/2017,14.37.2.23
+CatalogFile=tpcaststub.cat
+
+[DestinationDirs]
+DefaultDestDir = 12
+
+[ClassInstall32]
+Addreg=TpcastStubClassReg     
+CopyFiles=TpcastStub.NT.Copy
+
+[TpcastStubClassReg]
+HKR,,,0,%ClassName%
+HKR,,Icon,,-20
+HKR,,SilentInstall,,1
+HKR,,NoInstallClass,,1
+HKR,,NoDisplayClass,,1
+
+[Manufacturer]
+%StdMfg%=Tpcast, NTx86, NTia64, NTamd64
+
+;x86
+[Tpcast.NTx86]
+%TpcastStubDevice.DeviceDesc%=TpcastStub, TpcastStub
+
+;AMD64
+[Tpcast.NTamd64]
+%TpcastStubDevice.DeviceDesc%=TpcastStub, TpcastStub
+
+;IA64
+[Tpcast.NTia64]
+%TpcastStubDevice.DeviceDesc%=TpcastStub, TpcastStub
+
+
+[TpcastStub.NT]
+CopyFiles=TpcastStub.NT.Copy
+
+[TpcastStub.NT.Copy]
+tpcaststub.sys
+
+;-------------- Service installation
+[TpcastStub.NT.Services]
+AddService = TpcastStub, %SPSVCINST_ASSOCSERVICE%, TpcastStub_Service_Inst
+
+; -------------- Driver install sections
+[TpcastStub_Service_Inst]
+DisplayName    = %TpcastStub.SVCDESC%
+ServiceType    = 1               ; SERVICE_KERNEL_DRIVER
+StartType      = 3               ; SERVICE_DEMAND_START 
+ErrorControl   = 1               ; SERVICE_ERROR_NORMAL
+ServiceBinary  = %12%\Tpcaststub.sys
+LoadOrderGroup = Extended Base
+
+[SourceDisksNames]
+1 = %DiskId1%,,,""
+
+[SourceDisksFiles]
+tpcaststub.sys  = 1,,
+
+[Strings]
+SPSVCINST_ASSOCSERVICE= 0x00000002
+TPCAST = "TPCAST"
+ClassName = "Tpcast Stub"
+TpcastStubDevice.DeviceDesc = "Tpcast Stub"
+TpcastStub.SVCDESC = "Tpcast Stub"
+DiskId1 = "TPCAST Stub Disk #1"
+StdMfg="Tpcast"
