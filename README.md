@@ -2,7 +2,7 @@
 
 This repo shows the changes between each TPCast version, and lists out all the files available for each install.
 
-## Decmpiled Components
+## Decompiled Components
 
 We decompile the following .NET-based assemblies (both DLLs and EXEs) to get a rough idea of what's changed:
 
