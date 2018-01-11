@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 
 [assembly: AssemblyVersion("1.0.0.0")]
-[assembly: Debuggable(DebuggableAttribute.DebuggingModes.IgnoreSymbolStoreSequencePoints)]
+[assembly: Debuggable(DebuggableAttribute.DebuggingModes.Default | DebuggableAttribute.DebuggingModes.DisableOptimizations | DebuggableAttribute.DebuggingModes.IgnoreSymbolStoreSequencePoints | DebuggableAttribute.DebuggingModes.EnableEditAndContinue)]
 [assembly: AssemblyCompany("Microsoft")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCopyright("Copyright © Microsoft 2017")]

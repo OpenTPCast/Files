@@ -1,9 +1,12 @@
+using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Security.AccessControl;
+using System.Windows.Forms;
 
 namespace TPCASTUtil
 {
@@ -35,107 +38,176 @@ namespace TPCASTUtil
 
 		private static void Main(string[] args)
 		{
-			if (args != null && args.Count<string>() > 0)
+			bool flag = args != null && args.Count<string>() > 0;
+			if (flag)
 			{
 				Console.WriteLine("args = " + args[0]);
-				if (args[0] == "copy")
+				bool flag2 = args[0] == "copy";
+				if (flag2)
 				{
-					string expr_3B = Environment.CurrentDirectory;
-					string text = expr_3B + "\\TPCASTReboot.exe";
-					string text2 = expr_3B + "\\en\\TPCASTReboot.resources.dll";
-					string text3 = expr_3B + "\\zh\\TPCASTReboot.resources.dll";
-					string expr_6D = Path.GetTempPath() + "\\TPCAST";
-					string destFileName = expr_6D + "\\TPCASTReboot.exe";
-					string destFileName2 = expr_6D + "\\en\\TPCASTReboot.resources.dll";
-					string destFileName3 = expr_6D + "\\zh\\TPCASTReboot.resources.dll";
-					Directory.CreateDirectory(expr_6D);
-					Directory.CreateDirectory(expr_6D + "\\en");
-					Directory.CreateDirectory(expr_6D + "\\zh");
-					if (File.Exists(text))
+					string startupPath = Application.StartupPath;
+					string text = startupPath + "\\TPCASTReboot.exe";
+					string tempPath = Path.GetTempPath();
+					string text2 = tempPath + "\\TPCAST";
+					string destFileName = text2 + "\\TPCASTReboot.exe";
+					Directory.CreateDirectory(text2);
+					bool flag3 = File.Exists(text);
+					if (flag3)
 					{
 						File.Copy(text, destFileName, true);
-					}
-					if (File.Exists(text2))
-					{
-						File.Copy(text2, destFileName2, true);
-					}
-					if (File.Exists(text3))
-					{
-						File.Copy(text3, destFileName3, true);
-						return;
-					}
-				}
-				else if (args[0] == "kill")
-				{
-					if (args.Count<string>() > 1)
-					{
-						string text4 = args[1];
-						if (!string.IsNullOrEmpty(text4))
-						{
-							Program.killProcess(text4);
-							return;
-						}
 					}
 				}
 				else
 				{
-					if (args[0] == "properties")
+					bool flag4 = args[0] == "kill";
+					if (flag4)
 					{
-						DirectoryInfo[] directories = new DirectoryInfo(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\Microsoft").GetDirectories("TPCASTWindows*");
-						for (int i = 0; i < directories.Length; i++)
+						bool flag5 = args.Count<string>() > 1;
+						if (flag5)
 						{
-							DirectoryInfo directoryInfo = directories[i];
-							Console.WriteLine("dir " + directoryInfo);
-							directoryInfo.Delete(true);
-						}
-						return;
-					}
-					if (args[0] == "generate")
-					{
-						FileStream expr_1B1 = new FileStream(Environment.CurrentDirectory + "\\configuration.ini", FileMode.Create);
-						StreamWriter streamWriter = new StreamWriter(expr_1B1);
-						if (args.Count<string>() > 1)
-						{
-							if (args[1] == "Group_1")
+							string text3 = args[1];
+							bool flag6 = !string.IsNullOrEmpty(text3);
+							if (flag6)
 							{
-								streamWriter.WriteLine("192.168.144.88:5881");
-								streamWriter.WriteLine("192.168.144.88:5882");
-								streamWriter.WriteLine("192.168.144.88:5883");
-								streamWriter.WriteLine("192.168.144.88:5884");
-							}
-							else if (args[1] == "Group_2")
-							{
-								streamWriter.WriteLine("192.168.144.90:5881");
-								streamWriter.WriteLine("192.168.144.90:5882");
-								streamWriter.WriteLine("192.168.144.90:5883");
-								streamWriter.WriteLine("192.168.144.90:5884");
-							}
-							else if (args[1] == "Group_3")
-							{
-								streamWriter.WriteLine("192.168.144.92:5881");
-								streamWriter.WriteLine("192.168.144.92:5882");
-								streamWriter.WriteLine("192.168.144.92:5883");
-								streamWriter.WriteLine("192.168.144.92:5884");
-							}
-							else if (args[1] == "Group_4")
-							{
-								streamWriter.WriteLine("192.168.144.94:5881");
-								streamWriter.WriteLine("192.168.144.94:5882");
-								streamWriter.WriteLine("192.168.144.94:5883");
-								streamWriter.WriteLine("192.168.144.94:5884");
+								Program.killProcess(text3);
 							}
 						}
-						streamWriter.Flush();
-						streamWriter.Close();
-						expr_1B1.Close();
-						return;
 					}
-					if (args[0] == "configuration")
+					else
 					{
-						string path = Environment.CurrentDirectory + "\\configuration.ini";
-						if (File.Exists(path))
+						bool flag7 = args[0] == "properties";
+						if (flag7)
 						{
-							File.Delete(path);
+							string path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "TpcastForWPF");
+							DirectoryInfo directoryInfo = new DirectoryInfo(path);
+							DirectoryInfo[] directories = directoryInfo.GetDirectories("TpcastForWPF*");
+							DirectoryInfo[] array = directories;
+							for (int i = 0; i < array.Length; i++)
+							{
+								DirectoryInfo directoryInfo2 = array[i];
+								FileInfo[] files = directoryInfo2.GetFiles();
+								for (int j = 0; j < files.Length; j++)
+								{
+									FileInfo fileInfo = files[j];
+									fileInfo.Delete();
+								}
+								DirectoryInfo[] directories2 = directoryInfo2.GetDirectories();
+								for (int k = 0; k < directories2.Length; k++)
+								{
+									DirectoryInfo directoryInfo3 = directories2[k];
+									directoryInfo3.Delete(true);
+								}
+								directoryInfo2.Delete(true);
+							}
+							string startupPath2 = Application.StartupPath;
+							string path2 = startupPath2 + "\\configuration.ini";
+							bool flag8 = File.Exists(path2);
+							if (flag8)
+							{
+								File.Delete(path2);
+							}
+						}
+						else
+						{
+							bool flag9 = args[0] == "generate";
+							if (flag9)
+							{
+								string startupPath3 = Application.StartupPath;
+								string path3 = startupPath3 + "\\configuration.ini";
+								FileStream fileStream = new FileStream(path3, FileMode.Create);
+								StreamWriter streamWriter = new StreamWriter(fileStream);
+								string value = string.Empty;
+								bool flag10 = args.Count<string>() > 1;
+								if (flag10)
+								{
+									bool flag11 = args[1] == "VIVE";
+									if (flag11)
+									{
+										streamWriter.WriteLine("192.168.144.88:5881");
+										streamWriter.WriteLine("192.168.144.88:5882");
+										streamWriter.WriteLine("192.168.144.88:5883");
+										streamWriter.WriteLine("192.168.144.88:5884");
+										value = "VIVE";
+									}
+									else
+									{
+										bool flag12 = args[1] == "Oculus";
+										if (flag12)
+										{
+											streamWriter.WriteLine("192.168.144.88:5881");
+											streamWriter.WriteLine("192.168.144.88:5882");
+											value = "Oculus";
+										}
+										else
+										{
+											bool flag13 = args[1] == "VOAll";
+											if (flag13)
+											{
+												bool flag14 = args[3] == "VO_VIVE";
+												if (flag14)
+												{
+													streamWriter.WriteLine("192.168.144.88:5881");
+													streamWriter.WriteLine("192.168.144.88:5882");
+													streamWriter.WriteLine("192.168.144.88:5883");
+													streamWriter.WriteLine("192.168.144.88:5884");
+													value = "VO_VIVE";
+												}
+												else
+												{
+													bool flag15 = args[3] == "VO_Oculus";
+													if (flag15)
+													{
+														streamWriter.WriteLine("192.168.144.88:5881");
+														streamWriter.WriteLine("192.168.144.88:5882");
+														value = "VO_Oculus";
+													}
+												}
+											}
+										}
+									}
+								}
+								else
+								{
+									streamWriter.WriteLine("192.168.144.88:5881");
+									streamWriter.WriteLine("192.168.144.88:5882");
+									streamWriter.WriteLine("192.168.144.88:5883");
+									streamWriter.WriteLine("192.168.144.88:5884");
+									value = "VIVE";
+								}
+								streamWriter.Flush();
+								streamWriter.Close();
+								fileStream.Close();
+								bool flag16 = !string.IsNullOrEmpty(value);
+								if (flag16)
+								{
+									using (RegistryKey registryKey = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64))
+									{
+										using (RegistryKey registryKey2 = registryKey.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\" + args[2], RegistryKeyPermissionCheck.ReadWriteSubTree, RegistryRights.FullControl))
+										{
+											bool flag17 = registryKey2 != null;
+											if (flag17)
+											{
+												registryKey2.SetValue("SubType", value, RegistryValueKind.String);
+												registryKey2.SetValue("WindowsInstaller", 0, RegistryValueKind.DWord);
+											}
+										}
+									}
+								}
+							}
+							else
+							{
+								bool flag18 = args[0] == "configuration";
+								if (flag18)
+								{
+									string startupPath4 = Application.StartupPath;
+									string path4 = startupPath4 + "\\configuration.ini";
+									bool flag19 = File.Exists(path4);
+									if (flag19)
+									{
+										File.Delete(path4);
+									}
+								}
+							}
 						}
 					}
 				}
@@ -154,11 +226,46 @@ namespace TPCASTUtil
 		[DllImport("KERNEL32.DLL ")]
 		public static extern int Process32Next(IntPtr handle, ref Program.ProcessEntry32 pe);
 
+		public static string UninstallService()
+		{
+			Process process = new Process();
+			process.StartInfo.FileName = Application.StartupPath + "\\TpcastDaemon.exe";
+			process.StartInfo.Arguments = "uninstall";
+			process.StartInfo.WorkingDirectory = ".";
+			process.StartInfo.UseShellExecute = false;
+			process.StartInfo.RedirectStandardInput = true;
+			process.StartInfo.RedirectStandardOutput = true;
+			process.StartInfo.RedirectStandardError = true;
+			process.StartInfo.CreateNoWindow = true;
+			process.Start();
+			string result = process.StandardOutput.ReadToEnd();
+			process.Close();
+			return result;
+		}
+
+		public static string stopService()
+		{
+			Process process = new Process();
+			process.StartInfo.FileName = Application.StartupPath + "\\TpcastDaemon.exe";
+			process.StartInfo.Arguments = "disable";
+			process.StartInfo.WorkingDirectory = ".";
+			process.StartInfo.UseShellExecute = false;
+			process.StartInfo.RedirectStandardInput = true;
+			process.StartInfo.RedirectStandardOutput = true;
+			process.StartInfo.RedirectStandardError = true;
+			process.StartInfo.CreateNoWindow = true;
+			process.Start();
+			string result = process.StandardOutput.ReadToEnd();
+			process.Close();
+			return result;
+		}
+
 		public static void killProcess(string name)
 		{
 			IntPtr intPtr = Program.CreateToolhelp32Snapshot(2u, 0u);
 			List<Program.ProcessEntry32> list = new List<Program.ProcessEntry32>();
-			if ((int)intPtr > 0)
+			bool flag = (int)intPtr > 0;
+			if (flag)
 			{
 				Program.ProcessEntry32 processEntry = default(Program.ProcessEntry32);
 				processEntry.dwSize = (uint)Marshal.SizeOf(processEntry);
@@ -173,15 +280,17 @@ namespace TPCASTUtil
 				Program.CloseHandle(intPtr);
 				foreach (Program.ProcessEntry32 current in list)
 				{
-					if (name.Equals(current.szExeFile))
+					bool flag2 = name.Equals(current.szExeFile);
+					if (flag2)
 					{
 						try
 						{
-							Process.GetProcessById((int)current.th32ProcessID).Kill();
+							int th32ProcessID = (int)current.th32ProcessID;
+							Process.GetProcessById(th32ProcessID).Kill();
 						}
-						catch (Exception arg_CA_0)
+						catch (Exception ex)
 						{
-							Console.WriteLine(arg_CA_0.Message);
+							Console.WriteLine(ex.Message);
 						}
 					}
 				}
